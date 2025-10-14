@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="1200" height="600" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
-  <title>Histogram netto finish times</title>
-  <desc>Bar chart showing the number of finishers in one-minute bins of netto time.</desc>
+  <title>Histogram of net finish times</title>
+  <desc>Bar chart showing the number of finishers in one-minute buckets of net time.</desc>
   <rect x="0" y="0" width="1200" height="600" fill="#ffffff" />
   <line x1="70" y1="530" x2="1170" y2="530" stroke="#333333" stroke-width="1.5" />
   <line x1="70" y1="530" x2="70" y2="40" stroke="#333333" stroke-width="1.5" />
@@ -205,6 +205,6 @@
 <rect x="1148.85" y="530.00" width="6.05" height="0.00" fill="#1f77b4"><title>03:36-03:37: 0</title></rect>
 <rect x="1155.90" y="528.77" width="6.05" height="1.23" fill="#1f77b4"><title>03:37-03:38: 1</title></rect>
 <rect x="1162.95" y="530.00" width="6.05" height="0.00" fill="#1f77b4"><title>03:38-03:39: 0</title></rect>
-  <text x="600" y="580" text-anchor="middle" font-size="14" fill="#333333">Czas ukończenia netto (interwały 1 minuta, etykiety co 10 minut)</text>
-  <text x="20" y="300" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 20 300)">Liczba finiszerów</text>
+  <text x="600" y="580" text-anchor="middle" font-size="14" fill="#333333">Net finish time (1-minute buckets, labels every 10 min)</text>
+  <text x="20" y="300" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 20 300)">Number of finishers</text>
 </svg>

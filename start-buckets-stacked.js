@@ -140,7 +140,7 @@ function buildStackedHistogramSvg(finishBins, minFinishMinute, maxFinishMinute, 
           const height = Math.max(1, yBottom - yTop);
           cumulative += segment.count;
           const color = interpolateColor((segment.startSecond - minStartSecond) / (maxStartSecond - minStartSecond || 1));
-          const tooltip = `Meta ${minutesToLabel(bin.startMinute)}-${minutesToLabel(bin.startMinute + binSizeMinutes)}\nStart ${startMinuteLabel(segment.startMinuteKey)}: ${segment.count}`;
+          const tooltip = `Finish ${minutesToLabel(bin.startMinute)}-${minutesToLabel(bin.startMinute + binSizeMinutes)}\nStart ${startMinuteLabel(segment.startMinuteKey)}: ${segment.count}`;
           return `<rect x="${x.toFixed(2)}" y="${yTop.toFixed(2)}" width="${width.toFixed(2)}" height="${height.toFixed(2)}" fill="${color}"><title>${tooltip}</title></rect>`;
         })
         .join('\n');
@@ -175,7 +175,7 @@ function buildStackedHistogramSvg(finishBins, minFinishMinute, maxFinishMinute, 
     </linearGradient>
   </defs>`;
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg width="${SVG_WIDTH}" height="${SVG_HEIGHT}" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">\n  <title>Ukończenie kontra strefa startu</title>\n  <desc>Stacked histogram pokazujący liczbę finiszerów w minutowych koszykach czasu netto, z podziałem na minutę startu (kolor).</desc>\n  ${gradientLegend}\n  <rect x="0" y="0" width="${SVG_WIDTH}" height="${SVG_HEIGHT}" fill="#ffffff" />\n  <line x1="${PADDING_LEFT}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${SVG_WIDTH - PADDING_RIGHT}" y2="${SVG_HEIGHT - PADDING_BOTTOM}" stroke="#333333" stroke-width="1.5" />\n  <line x1="${PADDING_LEFT}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${PADDING_LEFT}" y2="${PADDING_TOP}" stroke="#333333" stroke-width="1.5" />\n  ${tickElements.join('\n  ')}\n  ${yTickElements.join('\n  ')}\n  ${columns}\n  <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Czas ukończenia netto (interwały 1 minuta, etykiety co 10 minut)</text>\n  <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">Liczba finiszerów</text>\n  <rect x="${SVG_WIDTH - PADDING_RIGHT - 220}" y="${PADDING_TOP}" width="180" height="12" fill="url(#startGradient)" />\n  <text x="${SVG_WIDTH - PADDING_RIGHT - 220}" y="${PADDING_TOP - 6}" text-anchor="start" font-size="12" fill="#333333">Wcześniejszy start</text>\n  <text x="${SVG_WIDTH - PADDING_RIGHT - 40}" y="${PADDING_TOP - 6}" text-anchor="end" font-size="12" fill="#333333">Późniejszy start</text>\n</svg>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg width="${SVG_WIDTH}" height="${SVG_HEIGHT}" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">\n  <title>Finish time vs start time</title>\n  <desc>Stacked histogram showing the number of finishers in 1-minute net finish time buckets, segmented by start minute (color).</desc>\n  ${gradientLegend}\n  <rect x="0" y="0" width="${SVG_WIDTH}" height="${SVG_HEIGHT}" fill="#ffffff" />\n  <line x1="${PADDING_LEFT}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${SVG_WIDTH - PADDING_RIGHT}" y2="${SVG_HEIGHT - PADDING_BOTTOM}" stroke="#333333" stroke-width="1.5" />\n  <line x1="${PADDING_LEFT}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${PADDING_LEFT}" y2="${PADDING_TOP}" stroke="#333333" stroke-width="1.5" />\n  ${tickElements.join('\n  ')}\n  ${yTickElements.join('\n  ')}\n  ${columns}\n  <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Net finish time (1-minute buckets, labels every 10 min)</text>\n  <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">Number of finishers</text>\n  <rect x="${SVG_WIDTH - PADDING_RIGHT - 220}" y="${PADDING_TOP}" width="180" height="12" fill="url(#startGradient)" />\n  <text x="${SVG_WIDTH - PADDING_RIGHT - 220}" y="${PADDING_TOP - 6}" text-anchor="start" font-size="12" fill="#333333">Earlier start</text>\n  <text x="${SVG_WIDTH - PADDING_RIGHT - 40}" y="${PADDING_TOP - 6}" text-anchor="end" font-size="12" fill="#333333">Later start</text>\n</svg>`;
 }
 
 function main() {
@@ -183,7 +183,7 @@ function main() {
   const records = JSON.parse(raw);
   const finishers = records.filter((entry) => entry.msc && entry.msc !== '0' && entry.czasnetto && entry.start);
   if (!finishers.length) {
-    console.error('Brak ukończonych biegów w danych.');
+  console.error('No completed runs in the data.');
     process.exit(1);
   }
 
@@ -203,7 +203,7 @@ function main() {
     .filter(Boolean);
 
   if (!runners.length) {
-    console.error('Nie udało się sparsować czasów startu/netto.');
+  console.error('Failed to parse start/net times.');
     process.exit(1);
   }
 
@@ -262,7 +262,7 @@ function main() {
   );
 
   fs.writeFileSync(OUTPUT_FILE, svg, 'utf8');
-  console.log(`Zapisano ${OUTPUT_FILE}.`);
+  console.log(`Saved ${OUTPUT_FILE}.`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="1200" height="600" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
-  <title>Half Marathon Netto Finish Times</title>
-  <desc>Each dot represents the netto finish time for a finisher. Filtered to participants with non-zero placing.</desc>
+  <title>Half marathon net finish times</title>
+  <desc>Each dot represents the net finish time for a finisher (only entries with non-zero placing).</desc>
   <rect x="0" y="0" width="1200" height="600" fill="#ffffff" />
   <line x1="50" y1="550.00" x2="50" y2="50.00" stroke="#333333" stroke-width="1" />
   <line x1="50.00" y1="550" x2="1150.00" y2="550" stroke="#333333" stroke-width="1" />
   <text x="40" y="550.00" text-anchor="end" alignment-baseline="middle" font-size="12" fill="#333333">63 min</text>
   <text x="40" y="50.00" text-anchor="end" alignment-baseline="middle" font-size="12" fill="#333333">218 min</text>
-  <text x="600" y="580" text-anchor="middle" font-size="14" fill="#333333">Zawodnicy (posortowani według kolejności w pliku)</text>
-  <text x="10" y="300" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 10 300)">Czas netto (sekundy)</text>
+  <text x="600" y="580" text-anchor="middle" font-size="14" fill="#333333">Participants (ordered as in file)</text>
+  <text x="10" y="300" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 10 300)">Net time (seconds)</text>
   <circle cx="50.00" cy="550.00" r="2" fill="#1f77b4"><title>1. KIMAIYO HILLARY KIPTUM MAIYO - 01:03:13,58</title></circle>
 <circle cx="50.08" cy="547.58" r="2" fill="#1f77b4"><title>2. TONUI ALBERT KIPKORIR - 01:03:58,36</title></circle>
 <circle cx="50.16" cy="544.31" r="2" fill="#1f77b4"><title>3. KACZOR MATEUSZ - 01:04:59,03</title></circle>

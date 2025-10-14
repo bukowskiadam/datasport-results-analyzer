@@ -83,7 +83,7 @@ function buildHistogramSvg(bins, binSizeMinutes, minMinute, maxMinute, maxCount)
     yTickElements.push(`<text x="${PADDING_LEFT - 10}" y="${y.toFixed(2)}" text-anchor="end" alignment-baseline="middle" font-size="12" fill="#333333">${Math.round(value)}</text>`);
   }
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg width="${SVG_WIDTH}" height="${SVG_HEIGHT}" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">\n  <title>Histogram netto finish times</title>\n  <desc>Bar chart showing the number of finishers in one-minute bins of netto time.</desc>\n  <rect x="0" y="0" width="${SVG_WIDTH}" height="${SVG_HEIGHT}" fill="#ffffff" />\n  <line x1="${PADDING_LEFT}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${SVG_WIDTH - PADDING_RIGHT}" y2="${SVG_HEIGHT - PADDING_BOTTOM}" stroke="#333333" stroke-width="1.5" />\n  <line x1="${PADDING_LEFT}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${PADDING_LEFT}" y2="${PADDING_TOP}" stroke="#333333" stroke-width="1.5" />\n  ${tickElements.join('\n  ')}\n  ${yTickElements.join('\n  ')}\n  ${barElements}\n  <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Czas ukończenia netto (interwały 1 minuta, etykiety co 10 minut)</text>\n  <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">Liczba finiszerów</text>\n</svg>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg width="${SVG_WIDTH}" height="${SVG_HEIGHT}" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">\n  <title>Histogram of net finish times</title>\n  <desc>Bar chart showing the number of finishers in one-minute buckets of net time.</desc>\n  <rect x="0" y="0" width="${SVG_WIDTH}" height="${SVG_HEIGHT}" fill="#ffffff" />\n  <line x1="${PADDING_LEFT}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${SVG_WIDTH - PADDING_RIGHT}" y2="${SVG_HEIGHT - PADDING_BOTTOM}" stroke="#333333" stroke-width="1.5" />\n  <line x1="${PADDING_LEFT}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${PADDING_LEFT}" y2="${PADDING_TOP}" stroke="#333333" stroke-width="1.5" />\n  ${tickElements.join('\n  ')}\n  ${yTickElements.join('\n  ')}\n  ${barElements}\n  <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Net finish time (1-minute buckets, labels every 10 min)</text>\n  <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">Number of finishers</text>\n</svg>`;
 }
 
 function main() {
@@ -91,7 +91,7 @@ function main() {
   const records = JSON.parse(raw);
   const finishers = records.filter((entry) => entry.msc && entry.msc !== '0' && entry.czasnetto);
   if (!finishers.length) {
-    console.error('Brak ukończonych biegów w danych.');
+  console.error('No completed runs in the data.');
     process.exit(1);
   }
 
@@ -100,7 +100,7 @@ function main() {
     .filter((seconds) => seconds !== null);
 
   if (!timesInSeconds.length) {
-    console.error('Nie udało się sparsować czasów netto.');
+  console.error('Failed to parse net times.');
     process.exit(1);
   }
 
@@ -126,7 +126,7 @@ function main() {
   const maxCount = Math.max(...bins.map((bin) => bin.count));
   const svg = buildHistogramSvg(bins, binSizeMinutes, minMinute, maxMinute, maxCount);
   fs.writeFileSync(OUTPUT_FILE, svg, 'utf8');
-  console.log(`Zapisano ${OUTPUT_FILE}.`);
+  console.log(`Saved ${OUTPUT_FILE}.`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
