@@ -64,7 +64,7 @@ npm run start-buckets-stacked
 
 ## Sample output
 
-Below are example SVGs generated from a datasport.pl half marathon dataset (embedded directly):
+Below are SVGs generated from the [11. PKO Cracovia Półmaraton Królewski](https://wyniki.datasport.pl/results5710/show/) dataset:
 
 ### Net finish times scatter
 <p>
