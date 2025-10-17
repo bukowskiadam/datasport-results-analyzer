@@ -118,6 +118,11 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60) {
 		);
 	}
 
+	// Generate X-axis label with bucket size
+	const bucketLabel = bucketSizeSeconds >= 60 
+		? `${bucketSizeSeconds / 60}-minute buckets`
+		: `${bucketSizeSeconds}-second buckets`;
+
 	return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${SVG_WIDTH}" height="${SVG_HEIGHT}" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <title>Histogram of net finish times</title>
@@ -129,7 +134,7 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60) {
   ${tickElements.join("\n  ")}
   ${yTickElements.join("\n  ")}
   ${barElements}
-  <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Net finish time (1-minute buckets, labels every 10 min)</text>
+  <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Net finish time (${bucketLabel}, labels every 10 min)</text>
   <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">Number of finishers</text>
   ${generateAttribution(SVG_WIDTH, SVG_HEIGHT)}
 </svg>`;

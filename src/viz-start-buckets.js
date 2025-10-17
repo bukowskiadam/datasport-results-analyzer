@@ -224,6 +224,11 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
 	const legendY = PADDING_TOP;
 	const legendWidth = 180;
 
+	// Generate X-axis label with bucket size
+	const bucketLabel = bucketSizeSeconds >= 60 
+		? `${bucketSizeSeconds / 60}-minute buckets`
+		: `${bucketSizeSeconds}-second buckets`;
+
 	return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${SVG_WIDTH}" height="${SVG_HEIGHT}" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <title>Finish time vs start time</title>
@@ -236,7 +241,7 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
   ${tickElements.join("\n  ")}
   ${yTickElements.join("\n  ")}
   ${columns}
-  <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Net finish time (1-minute buckets, labels every 10 min)</text>
+  <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Net finish time (${bucketLabel}, labels every 10 min)</text>
   <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">Number of finishers</text>
   <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="12" fill="url(#startGradient)" />
   <text x="${legendX}" y="${legendY - 6}" text-anchor="start" font-size="12" fill="#333333">Earlier start</text>
