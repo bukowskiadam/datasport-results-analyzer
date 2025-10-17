@@ -104,14 +104,7 @@ function setupDistanceFilter(data) {
 	fullDataset = data;
 	availableDistances = getUniqueDistances(data);
 
-	if (availableDistances.length <= 1) {
-		// Only one distance or no distance data, hide filter
-		distanceFilterSection.style.display = "none";
-		distanceSelect.value = "";
-		return;
-	}
-
-	// Multiple distances found, show filter
+	// Always show the filter section
 	distanceFilterSection.style.display = "block";
 
 	// Populate select options
@@ -123,8 +116,15 @@ function setupDistanceFilter(data) {
 		distanceSelect.appendChild(option);
 	}
 
-	// Reset to show all
-	distanceSelect.value = "";
+	// If only one distance, preselect it and disable the dropdown
+	if (availableDistances.length === 1) {
+		distanceSelect.value = availableDistances[0].value;
+		distanceSelect.disabled = true;
+	} else {
+		distanceSelect.value = "";
+		distanceSelect.disabled = false;
+	}
+	
 	updateDistanceInfo(data);
 }
 
@@ -133,16 +133,17 @@ function setupDistanceFilter(data) {
  * @param {Array} data - Current filtered data
  */
 function updateDistanceInfo(data) {
-	if (availableDistances.length <= 1) {
-		distanceInfo.textContent = "";
-		return;
-	}
-
 	const selectedDistance = distanceSelect.value;
 	if (selectedDistance) {
 		distanceInfo.textContent = `Showing ${data.length} results`;
 	} else {
-		distanceInfo.textContent = `${data.length} total results across ${availableDistances.length} distances`;
+		if (availableDistances.length > 1) {
+			distanceInfo.textContent = `${data.length} total results across ${availableDistances.length} distances`;
+		} else if (availableDistances.length === 1) {
+			distanceInfo.textContent = `${data.length} results`;
+		} else {
+			distanceInfo.textContent = "";
+		}
 	}
 }
 
@@ -301,12 +302,13 @@ async function handleFileUpload(file) {
 		const finishers = filterFinishers(data);
 		const dnfCount = data.length - finishers.length;
 
-		// Show success message
-		fileInfo.style.display = "block";
+		// Show success message in distance filter section
+		const dataInfo = document.getElementById("data-info");
+		dataInfo.style.display = "block";
 		if (dnfCount > 0) {
-			fileInfo.textContent = `✓ Loaded ${finishers.length} finishers from ${file.name} (${dnfCount} DNF/DNS excluded)`;
+			dataInfo.textContent = `✓ Loaded ${finishers.length} finishers from ${file.name} (${dnfCount} DNF/DNS excluded)`;
 		} else {
-			fileInfo.textContent = `✓ Loaded ${finishers.length} results from ${file.name}`;
+			dataInfo.textContent = `✓ Loaded ${finishers.length} results from ${file.name}`;
 		}
 
 		// Save to storage (save original data)
@@ -436,12 +438,13 @@ async function handleStoredResultClick(id) {
 		// Generate visualizations
 		generateVisualizations(finishers);
 
-		// Show info
-		fileInfo.style.display = "block";
+		// Show info in distance filter section
+		const dataInfo = document.getElementById("data-info");
+		dataInfo.style.display = "block";
 		if (dnfCount > 0) {
-			fileInfo.textContent = `✓ Loaded ${finishers.length} finishers from storage: ${result.name} (${dnfCount} DNF/DNS excluded)`;
+			dataInfo.textContent = `✓ Loaded ${finishers.length} finishers from storage: ${result.name} (${dnfCount} DNF/DNS excluded)`;
 		} else {
-			fileInfo.textContent = `✓ Loaded ${finishers.length} results from storage: ${result.name}`;
+			dataInfo.textContent = `✓ Loaded ${finishers.length} results from storage: ${result.name}`;
 		}
 
 		console.log(`Analyzed stored result: ${result.name}`);
