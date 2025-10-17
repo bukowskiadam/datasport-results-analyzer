@@ -35,6 +35,23 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
 		throw new Error("No completed runs in the data.");
 	}
 
+	// First pass: collect all start seconds to calculate the range
+	const allStartSeconds = finishers
+		.map((entry) => parseStartTime(entry.start))
+		.filter((sec) => sec !== null);
+
+	if (!allStartSeconds.length) {
+		throw new Error("Failed to parse start times.");
+	}
+
+	const minStartSecond = Math.min(...allStartSeconds);
+	const maxStartSecond = Math.max(...allStartSeconds);
+	const startRange = maxStartSecond - minStartSecond;
+	
+	// Divide start time range into 30 equal windows
+	const startBucketCount = 30;
+	const startBucketSize = startRange / startBucketCount || 1; // Avoid division by zero
+
 	const runners = finishers
 		.map((entry) => {
 			const netSeconds = parseNetTime(entry.czasnetto);
@@ -42,9 +59,14 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
 			if (netSeconds === null || startSecond === null) {
 				return null;
 			}
+			// Assign to one of 30 start buckets
+			const startBucketIndex = Math.min(
+				startBucketCount - 1,
+				Math.floor((startSecond - minStartSecond) / startBucketSize),
+			);
 			return {
 				finishMinute: netSeconds / 60,
-				startMinuteKey: Math.floor(startSecond / 60),
+				startBucketKey: startBucketIndex,
 				startSecond,
 			};
 		})
@@ -59,12 +81,6 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
 	);
 	const maxFinishMinute = Math.ceil(
 		Math.max(...runners.map((runner) => runner.finishMinute)),
-	);
-	const minStartSecond = Math.min(
-		...runners.map((runner) => runner.startSecond),
-	);
-	const maxStartSecond = Math.max(
-		...runners.map((runner) => runner.startSecond),
 	);
 
 	const binSizeMinutes = bucketSizeSeconds / 60;
@@ -88,18 +104,19 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
 			Math.floor((runner.finishMinute - minFinishMinute) / binSizeMinutes),
 		);
 		const bin = finishBins[binIndex];
-		const count = bin.totalsByStart.get(runner.startMinuteKey) || 0;
-		bin.totalsByStart.set(runner.startMinuteKey, count + 1);
+		const count = bin.totalsByStart.get(runner.startBucketKey) || 0;
+		bin.totalsByStart.set(runner.startBucketKey, count + 1);
 		bin.total += 1;
 	});
 
 	const enrichedBins = finishBins.map((bin) => {
 		const segments = Array.from(bin.totalsByStart.entries())
 			.sort((a, b) => a[0] - b[0])
-			.map(([startMinuteKey, count]) => ({
-				startMinuteKey,
+			.map(([startBucketKey, count]) => ({
+				startBucketKey,
 				count,
-				startSecond: startMinuteKey * 60,
+				// Calculate the middle of this start bucket for color mapping
+				startSecond: minStartSecond + (startBucketKey + 0.5) * startBucketSize,
 			}));
 		return {
 			startMinute: bin.startMinute,
@@ -142,7 +159,7 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
 						(segment.startSecond - minStartSecond) /
 							(maxStartSecond - minStartSecond || 1),
 					);
-					const tooltip = `Finish ${minutesToLabel(bin.startMinute)}-${minutesToLabel(bin.startMinute + binSizeMinutes)}\nStart ${minutesToLabel(segment.startMinuteKey)}: ${segment.count}`;
+					const tooltip = `Finish ${minutesToLabel(bin.startMinute)}-${minutesToLabel(bin.startMinute + binSizeMinutes)}\nStart bucket ${segment.startBucketKey + 1}: ${segment.count}`;
 					return `<rect x="${x.toFixed(2)}" y="${yTop.toFixed(2)}" width="${width.toFixed(2)}" height="${height.toFixed(2)}" fill="${color}"><title>${tooltip}</title></rect>`;
 				})
 				.join("\n");
@@ -189,6 +206,24 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
     </linearGradient>
   </defs>`;
 
+	// Format start time labels based on range
+	const formatStartTime = (seconds) => {
+		if (startRange > 180) {
+			// Use minutes if range > 3 minutes
+			const minutes = Math.round(seconds / 60);
+			return `${minutes}min`;
+		}
+		return `${Math.round(seconds)}s`;
+	};
+
+	const startLabel0 = formatStartTime(0);
+	const startLabelMid = formatStartTime(startRange / 2);
+	const startLabelEnd = formatStartTime(startRange);
+
+	const legendX = SVG_WIDTH - PADDING_RIGHT - 220;
+	const legendY = PADDING_TOP;
+	const legendWidth = 180;
+
 	return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${SVG_WIDTH}" height="${SVG_HEIGHT}" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <title>Finish time vs start time</title>
@@ -203,9 +238,12 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
   ${columns}
   <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Net finish time (1-minute buckets, labels every 10 min)</text>
   <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">Number of finishers</text>
-  <rect x="${SVG_WIDTH - PADDING_RIGHT - 220}" y="${PADDING_TOP}" width="180" height="12" fill="url(#startGradient)" />
-  <text x="${SVG_WIDTH - PADDING_RIGHT - 220}" y="${PADDING_TOP - 6}" text-anchor="start" font-size="12" fill="#333333">Earlier start</text>
-  <text x="${SVG_WIDTH - PADDING_RIGHT - 40}" y="${PADDING_TOP - 6}" text-anchor="end" font-size="12" fill="#333333">Later start</text>
+  <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="12" fill="url(#startGradient)" />
+  <text x="${legendX}" y="${legendY - 6}" text-anchor="start" font-size="12" fill="#333333">Earlier start</text>
+  <text x="${legendX + legendWidth}" y="${legendY - 6}" text-anchor="end" font-size="12" fill="#333333">Later start</text>
+  <text x="${legendX}" y="${legendY + 24}" text-anchor="start" font-size="10" fill="#666666">${startLabel0}</text>
+  <text x="${legendX + legendWidth / 2}" y="${legendY + 24}" text-anchor="middle" font-size="10" fill="#666666">${startLabelMid}</text>
+  <text x="${legendX + legendWidth}" y="${legendY + 24}" text-anchor="end" font-size="10" fill="#666666">${startLabelEnd}</text>
   ${generateAttribution(SVG_WIDTH, SVG_HEIGHT)}
 </svg>`;
 }
