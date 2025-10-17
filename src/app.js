@@ -14,6 +14,7 @@ import {
 	saveResult,
 	updateResult,
 } from "./storage.js";
+import { filterFinishers, getUniqueDistances } from "./utils.js";
 import {
 	generateHistogramSvg,
 	generateNettoTimesSvg,
@@ -42,6 +43,13 @@ const storedResultsList = document.getElementById("stored-results-list");
 const storageUsageEl = document.getElementById("storage-usage");
 const clearAllBtn = document.getElementById("clear-all-btn");
 
+// Distance filter elements
+const distanceFilterSection = document.getElementById(
+	"distance-filter-section",
+);
+const distanceSelect = document.getElementById("distance-select");
+const distanceInfo = document.getElementById("distance-info");
+
 // Visualization containers
 const nettoTimesContainer = document.getElementById("viz-netto-times");
 const histogramContainer = document.getElementById("viz-histogram");
@@ -56,6 +64,10 @@ const generatedSvgs = {
 
 // Store current JSON URL for manual download
 let currentJsonUrl = null;
+
+// Store full dataset and current filter state
+let fullDataset = null;
+let availableDistances = [];
 
 /**
  * Show error message to user
@@ -85,29 +97,132 @@ function showResults() {
 }
 
 /**
+ * Setup distance filter UI
+ * @param {Array} data - Full race results data
+ */
+function setupDistanceFilter(data) {
+	fullDataset = data;
+	availableDistances = getUniqueDistances(data);
+
+	if (availableDistances.length <= 1) {
+		// Only one distance or no distance data, hide filter
+		distanceFilterSection.style.display = "none";
+		distanceSelect.value = "";
+		return;
+	}
+
+	// Multiple distances found, show filter
+	distanceFilterSection.style.display = "block";
+
+	// Populate select options
+	distanceSelect.innerHTML = '<option value="">All Distances</option>';
+	for (const distance of availableDistances) {
+		const option = document.createElement("option");
+		option.value = distance.value;
+		option.textContent = distance.label;
+		distanceSelect.appendChild(option);
+	}
+
+	// Reset to show all
+	distanceSelect.value = "";
+	updateDistanceInfo(data);
+}
+
+/**
+ * Update distance info display
+ * @param {Array} data - Current filtered data
+ */
+function updateDistanceInfo(data) {
+	if (availableDistances.length <= 1) {
+		distanceInfo.textContent = "";
+		return;
+	}
+
+	const selectedDistance = distanceSelect.value;
+	if (selectedDistance) {
+		distanceInfo.textContent = `Showing ${data.length} results`;
+	} else {
+		distanceInfo.textContent = `${data.length} total results across ${availableDistances.length} distances`;
+	}
+}
+
+/**
+ * Filter data by selected distance
+ * @returns {Array} Filtered race results data
+ */
+function getFilteredData() {
+	if (!fullDataset) {
+		return [];
+	}
+
+	const selectedDistance = distanceSelect.value;
+	if (!selectedDistance) {
+		return fullDataset;
+	}
+
+	return fullDataset.filter((result) => result.odleglosc === selectedDistance);
+}
+
+/**
  * Generate and display all visualizations
  * @param {Array} data - Race results data
  */
 function generateVisualizations(data) {
 	try {
+		// Setup distance filter with full dataset
+		setupDistanceFilter(data);
+
+		// Get filtered data
+		const filteredData = getFilteredData();
+
 		// Generate net times visualization
-		const nettoTimesSvg = generateNettoTimesSvg(data);
+		const nettoTimesSvg = generateNettoTimesSvg(filteredData);
 		nettoTimesContainer.innerHTML = nettoTimesSvg;
 		generatedSvgs["netto-times"] = nettoTimesSvg;
 
 		// Generate histogram visualization
-		const histogramSvg = generateHistogramSvg(data);
+		const histogramSvg = generateHistogramSvg(filteredData);
 		histogramContainer.innerHTML = histogramSvg;
 		generatedSvgs["histogram"] = histogramSvg;
 
 		// Generate start buckets visualization
-		const startBucketsSvg = generateStartBucketsSvg(data);
+		const startBucketsSvg = generateStartBucketsSvg(filteredData);
 		startBucketsContainer.innerHTML = startBucketsSvg;
 		generatedSvgs["start-buckets"] = startBucketsSvg;
 
 		showResults();
 	} catch (error) {
 		throw new Error(`Failed to generate visualizations: ${error.message}`);
+	}
+}
+
+/**
+ * Regenerate visualizations with current filter
+ */
+function regenerateVisualizations() {
+	if (!fullDataset) {
+		return;
+	}
+
+	const filteredData = getFilteredData();
+	updateDistanceInfo(filteredData);
+
+	try {
+		// Regenerate all visualizations with filtered data
+		const nettoTimesSvg = generateNettoTimesSvg(filteredData);
+		nettoTimesContainer.innerHTML = nettoTimesSvg;
+		generatedSvgs["netto-times"] = nettoTimesSvg;
+
+		const histogramSvg = generateHistogramSvg(filteredData);
+		histogramContainer.innerHTML = histogramSvg;
+		generatedSvgs["histogram"] = histogramSvg;
+
+		const startBucketsSvg = generateStartBucketsSvg(filteredData);
+		startBucketsContainer.innerHTML = startBucketsSvg;
+		generatedSvgs["start-buckets"] = startBucketsSvg;
+	} catch (error) {
+		console.error("Failed to regenerate visualizations:", error);
+		showError(`Failed to regenerate visualizations: ${error.message}`);
 	}
 }
 
@@ -182,11 +297,19 @@ async function handleFileUpload(file) {
 			throw new Error("Invalid JSON format. Expected an array of results.");
 		}
 
+		// Filter to only include finishers (those with czasnetto)
+		const finishers = filterFinishers(data);
+		const dnfCount = data.length - finishers.length;
+
 		// Show success message
 		fileInfo.style.display = "block";
-		fileInfo.textContent = `✓ Loaded ${data.length} results from ${file.name}`;
+		if (dnfCount > 0) {
+			fileInfo.textContent = `✓ Loaded ${finishers.length} finishers from ${file.name} (${dnfCount} DNF/DNS excluded)`;
+		} else {
+			fileInfo.textContent = `✓ Loaded ${finishers.length} results from ${file.name}`;
+		}
 
-		// Save to storage
+		// Save to storage (save original data)
 		try {
 			const sourceUrl = urlInput.value.trim() || null;
 			await saveResult(file.name, data, sourceUrl, file.size);
@@ -196,8 +319,8 @@ async function handleFileUpload(file) {
 			// Continue anyway - visualization still works
 		}
 
-		// Generate visualizations
-		generateVisualizations(data);
+		// Generate visualizations with finishers only
+		generateVisualizations(finishers);
 
 		console.log(`Successfully analyzed ${data.length} race results from file`);
 	} catch (error) {
@@ -244,7 +367,7 @@ async function loadStoredResults() {
 function createResultCard(result) {
 	const date = new Date(result.uploadDate).toLocaleString();
 	const hasUrl = result.sourceUrl?.trim();
-	
+
 	return `
 		<div class="result-card" data-id="${result.id}">
 			<div class="result-card-header">
@@ -262,12 +385,16 @@ function createResultCard(result) {
 					<span>📅 ${date}</span>
 				</div>
 				<div class="result-meta-item result-url">
-					${hasUrl ? `
+					${
+						hasUrl
+							? `
 						<a href="${result.sourceUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open datasport page">🔗 View online</a>
-					` : `
+					`
+							: `
 						<span class="no-url">No URL</span>
-					`}
-					<button class="edit-url-btn" data-id="${result.id}" title="${hasUrl ? 'Edit URL' : 'Add URL'}">✏️</button>
+					`
+					}
+					<button class="edit-url-btn" data-id="${result.id}" title="${hasUrl ? "Edit URL" : "Add URL"}">✏️</button>
 				</div>
 			</div>
 		</div>
@@ -302,12 +429,20 @@ async function handleStoredResultClick(id) {
 			throw new Error("Result not found");
 		}
 
+		// Filter to only include finishers
+		const finishers = filterFinishers(result.data);
+		const dnfCount = result.data.length - finishers.length;
+
 		// Generate visualizations
-		generateVisualizations(result.data);
+		generateVisualizations(finishers);
 
 		// Show info
 		fileInfo.style.display = "block";
-		fileInfo.textContent = `✓ Loaded ${result.recordCount} results from storage: ${result.name}`;
+		if (dnfCount > 0) {
+			fileInfo.textContent = `✓ Loaded ${finishers.length} finishers from storage: ${result.name} (${dnfCount} DNF/DNS excluded)`;
+		} else {
+			fileInfo.textContent = `✓ Loaded ${finishers.length} results from storage: ${result.name}`;
+		}
 
 		console.log(`Analyzed stored result: ${result.name}`);
 	} catch (error) {
@@ -367,8 +502,11 @@ async function handleEditUrl(id) {
 			throw new Error("Result not found");
 		}
 
-		const newUrl = prompt("Enter the datasport.pl URL:", result.sourceUrl || "");
-		
+		const newUrl = prompt(
+			"Enter the datasport.pl URL:",
+			result.sourceUrl || "",
+		);
+
 		if (newUrl === null) {
 			// User cancelled
 			return;
@@ -478,6 +616,11 @@ async function init() {
 	// Clear all button
 	clearAllBtn.addEventListener("click", handleClearAll);
 
+	// Distance filter change
+	distanceSelect.addEventListener("change", () => {
+		regenerateVisualizations();
+	});
+
 	// Stored results list event delegation
 	storedResultsList.addEventListener("click", (e) => {
 		const deleteBtn = e.target.closest(".delete-btn");
@@ -499,13 +642,17 @@ async function init() {
 	});
 
 	// Handle name editing with blur and enter key
-	storedResultsList.addEventListener("blur", async (e) => {
-		if (e.target.classList.contains("result-name")) {
-			const id = Number.parseInt(e.target.dataset.id, 10);
-			const newName = e.target.textContent.trim();
-			await handleRenameResult(id, newName);
-		}
-	}, true);
+	storedResultsList.addEventListener(
+		"blur",
+		async (e) => {
+			if (e.target.classList.contains("result-name")) {
+				const id = Number.parseInt(e.target.dataset.id, 10);
+				const newName = e.target.textContent.trim();
+				await handleRenameResult(id, newName);
+			}
+		},
+		true,
+	);
 
 	storedResultsList.addEventListener("keydown", (e) => {
 		if (e.target.classList.contains("result-name") && e.key === "Enter") {

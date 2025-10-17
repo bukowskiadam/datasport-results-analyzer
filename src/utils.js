@@ -3,6 +3,75 @@
  */
 
 /**
+ * Filter results to include only finishers (those with czasnetto)
+ * @param {Array} data - Race results data
+ * @returns {Array} Filtered array with only finishers
+ */
+export function filterFinishers(data) {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+  return data.filter(result => result.czasnetto && result.czasnetto.trim() !== '');
+}
+
+/**
+ * Extract unique distances from race results data
+ * @param {Array} data - Race results data
+ * @returns {Array<{value: string, label: string}>} Array of unique distances with labels
+ */
+export function getUniqueDistances(data) {
+  if (!Array.isArray(data) || data.length === 0) {
+    return [];
+  }
+
+  const distanceSet = new Set();
+  for (const result of data) {
+    if (result.odleglosc) {
+      distanceSet.add(result.odleglosc);
+    }
+  }
+
+  const distances = Array.from(distanceSet)
+    .sort((a, b) => parseFloat(a) - parseFloat(b))
+    .map(value => ({
+      value,
+      label: formatDistance(value)
+    }));
+
+  return distances;
+}
+
+/**
+ * Format distance value for display
+ * @param {string} distanceStr - Distance as string (e.g., "21097.00")
+ * @returns {string} Formatted distance (e.g., "21.1 km" for half marathon)
+ */
+export function formatDistance(distanceStr) {
+  const meters = parseFloat(distanceStr);
+  if (Number.isNaN(meters)) {
+    return distanceStr;
+  }
+
+  const km = meters / 1000;
+  
+  // Common race distances with special names
+  if (Math.abs(km - 42.195) < 0.1) {
+    return `Marathon (${km.toFixed(2)} km)`;
+  }
+  if (Math.abs(km - 21.0975) < 0.1) {
+    return `Half Marathon (${km.toFixed(2)} km)`;
+  }
+  if (Math.abs(km - 10) < 0.1) {
+    return `10 km`;
+  }
+  if (Math.abs(km - 5) < 0.1) {
+    return `5 km`;
+  }
+
+  return `${km.toFixed(2)} km`;
+}
+
+/**
  * Parse net time string (format: "HH:MM:SS,mmm") to seconds
  * @param {string} value - Time string to parse
  * @returns {number|null} Time in seconds or null if invalid
