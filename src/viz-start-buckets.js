@@ -3,6 +3,7 @@
  */
 
 import {
+	calculateTimeInterval,
 	generateAttribution,
 	generateWatermark,
 	interpolateColor,
@@ -168,10 +169,11 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
 		.join("\n");
 
 	const tickElements = [];
+	const timeInterval = calculateTimeInterval(minFinishMinute, maxFinishMinute);
 	for (
-		let minute = Math.ceil(minFinishMinute / 10) * 10;
+		let minute = Math.ceil(minFinishMinute / timeInterval) * timeInterval;
 		minute <= maxFinishMinute + binSizeMinutes;
-		minute += 10
+		minute += timeInterval
 	) {
 		const x = scaleX(minute);
 		tickElements.push(

@@ -3,6 +3,7 @@
  */
 
 import {
+	calculateTimeInterval,
 	generateAttribution,
 	generateWatermark,
 	minutesToLabel,
@@ -91,10 +92,11 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60) {
 		.join("\n");
 
 	const tickElements = [];
+	const timeInterval = calculateTimeInterval(minMinute, maxMinute);
 	for (
-		let minute = Math.ceil(minMinute / 10) * 10;
+		let minute = Math.ceil(minMinute / timeInterval) * timeInterval;
 		minute <= maxMinute + binSizeMinutes;
-		minute += 10
+		minute += timeInterval
 	) {
 		const x = scaleX(minute);
 		tickElements.push(

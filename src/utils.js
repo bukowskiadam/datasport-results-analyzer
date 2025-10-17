@@ -3,6 +3,29 @@
  */
 
 /**
+ * Calculate appropriate time interval for axis labels based on time range
+ * @param {number} minMinute - Minimum time in minutes
+ * @param {number} maxMinute - Maximum time in minutes
+ * @returns {number} Interval in minutes (1, 2, 5, 10, 15, 20, 30, 60, etc.)
+ */
+export function calculateTimeInterval(minMinute, maxMinute) {
+  const range = maxMinute - minMinute;
+  
+  // Target 6-10 labels
+  const idealIntervals = [1, 2, 5, 10, 15, 20, 30, 60, 120, 180, 240];
+  
+  for (const interval of idealIntervals) {
+    const labelCount = range / interval;
+    if (labelCount <= 15) {
+      return interval;
+    }
+  }
+  
+  // For very large ranges, calculate a multiple of 60 minutes
+  return Math.ceil(range / 10 / 60) * 60;
+}
+
+/**
  * Filter results to include only finishers (those with czasnetto)
  * @param {Array} data - Race results data
  * @returns {Array} Filtered array with only finishers
