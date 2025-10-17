@@ -2,6 +2,8 @@
 
 A web-based application for analyzing and visualizing race results from datasport.pl.
 
+**🚀 [Live Demo](https://bukowskiadam.github.io/datasport-results-analyzer/)**
+
 Generate interactive SVG visualizations from race results data:
 
 1. **Netto times scatter** - Each dot represents a finisher's net time
@@ -18,6 +20,10 @@ Generate interactive SVG visualizations from race results data:
 - 💻 **No Build Step** - Pure ES6 modules, runs directly in modern browsers
 
 ## Getting Started
+
+### Quick Start
+
+Visit the **[Live Demo](https://bukowskiadam.github.io/datasport-results-analyzer/)** to use the application immediately - no installation required!
 
 ### Option 1: Open Directly in Browser
 
@@ -108,6 +114,17 @@ datasport-results-analyzer/
 - **IndexedDB** - Client-side persistent storage (handles large files >50MB)
 - **SVG** - Scalable vector graphics generation
 - **HTML5 & CSS3** - Modern web standards
+- **GitHub Pages** - Hosted and deployed automatically
+
+## Deployment
+
+The application is automatically deployed to GitHub Pages on every push to the `master` branch. The deployment workflow:
+
+1. Triggers on push to `master`
+2. Uploads the `src/` directory as a static site
+3. Deploys to `https://bukowskiadam.github.io/datasport-results-analyzer/`
+
+The workflow is defined in `.github/workflows/deploy.yml`.
 
 ## Sample output
 
