@@ -1,68 +1,113 @@
 # datasport-results-analyzer
 
-Generate SVG visualizations from `results.json` (a large race results data file):
+A web-based application for analyzing and visualizing race results from datasport.pl.
 
-1. Netto times scatter (`netto-times.svg`)
-2. Netto times histogram (`histogram-netto-times.svg`)
-3. Stacked finish vs start time histogram (`start-buckets-stacked.svg`)
+Generate interactive SVG visualizations from race results data:
 
-## Data source (datasport.pl)
+1. **Netto times scatter** - Each dot represents a finisher's net time
+2. **Netto times histogram** - Distribution of finishers in 1-minute buckets
+3. **Stacked finish vs start time histogram** - Finish times segmented by start minute
 
-This tool is tailored for race result pages hosted at https://wyniki.datasport.pl.
+## Features
 
-How to obtain the JSON:
+- 🌐 **Web Interface** - Analyze results directly in your browser
+- 💾 **Persistent Storage** - Save multiple race results for quick access (uses IndexedDB)
+- 📊 **Three Visualizations** - Generate scatter plots and histograms
+- 📝 **Metadata Management** - Rename stored results and track source URLs
+- 🔗 **URL Tracking** - Link back to original datasport.pl pages
+- 💻 **No Build Step** - Pure ES6 modules, runs directly in modern browsers
 
-1. Open a results page in your browser, e.g.:
-	https://wyniki.datasport.pl/results5710/show/
-2. In the address bar replace the trailing `show/` (or `show` plus any filters) with `results.json` keeping the event id the same. Example:
-	https://wyniki.datasport.pl/results5710/results.json
-3. Save that file as `results.json` in the root of this repository (overwrite any existing one).
-4. Run the scripts (see below) to produce the SVG visualizations.
+## Getting Started
 
-Notes:
-- If there are category filters in the URL, remove them before replacing; the JSON endpoint returns the full dataset.
-- The field names (e.g. `czasnetto`, `msc`, `start`) come directly from the datasport JSON and are parsed as-is.
+### Option 1: Open Directly in Browser
 
-## Prerequisites
+1. Open `src/index.html` in your web browser
+2. No build step or server required!
 
-- Node.js 18+ (project uses ES Modules)
-- `results.json` in the project root (already present)
+### Option 2: Using a Local Server
 
-## Install
+If you prefer using a local server:
 
 ```fish
-npm install
+# Using Python
+python -m http.server 8000
+
+# Using Node.js http-server
+npx http-server
+
+# Using PHP
+php -S localhost:8000
 ```
 
-## Generate all graphs
+Then navigate to `http://localhost:8000/src/`
 
-```fish
-npm run graphs
+## How to Use
+
+### 1. Download Results Manually
+
+Due to CORS restrictions, you'll need to download the JSON file:
+
+1. Open a results page on datasport.pl, for example: https://wyniki.datasport.pl/results5710/show/
+2. Enter the opened datasport.pl URL in the input field
+3. Click **"Prepare Download"**
+4. Click **"📄 Open results.json in New Tab"**
+5. Save the file (Ctrl/Cmd + S or right-click → Save)
+
+### 2. Upload and Analyze
+
+1. Drag and drop the saved `results.json` file into the upload zone, or click **"Browse Files"**
+2. The file is automatically saved to IndexedDB for future access
+3. Three visualizations are generated instantly
+4. Download individual SVGs using the buttons below each visualization
+
+### 3. Manage Stored Results
+
+Stored results are displayed as cards with:
+- **Name** - Click to rename (inline editing)
+- **Record count, file size, upload date**
+- **Source URL** (if provided) - Link back to datasport.pl
+- **Edit URL button (✏️)** - Add or update the source URL
+- **Delete button (×)** - Remove individual result
+
+Click any result card to load and analyze it again.
+
+## Data Source (datasport.pl)
+
+This tool is specifically designed for race result pages at https://wyniki.datasport.pl.
+
+**Notes:**
+- If the URL has category filters, remove them - the JSON endpoint returns the full dataset
+- Field names (`czasnetto`, `msc`, `start`) come directly from datasport JSON
+- Scripts filter to finishers with non-zero placing and valid time fields
+- Malformed data is skipped gracefully
+
+## Project Structure
+
+```
+datasport-results-analyzer/
+├── src/
+│   ├── index.html              # Main web interface
+│   ├── styles.css              # Application styling
+│   ├── app.js                  # Main controller
+│   ├── storage.js              # IndexedDB persistence layer
+│   ├── visualizations.js       # Visualization exports (re-exports from viz-* files)
+│   ├── viz-netto-times.js      # Net times scatter plot generator
+│   ├── viz-histogram.js        # Histogram visualization generator
+│   ├── viz-start-buckets.js    # Stacked histogram generator
+│   ├── utils.js                # Shared utilities
+│   └── datasport-fetcher.js    # URL parsing utilities
+├── results.json                # Sample data (optional)
+├── package.json
+└── README.md
 ```
 
-This simply chains the three Node scripts (no external runner dependency) and produces the SVG files.
+## Technology Stack
 
-Outputs are written to the project root:
-
-- `netto-times.svg`
-- `histogram-netto-times.svg`
-- `start-buckets-stacked.svg`
-
-Scripts are located in the `src/` directory.
-
-## Run individual scripts
-
-```fish
-npm run netto-times
-npm run histogram-netto-times
-npm run start-buckets-stacked
-```
-
-## Notes
-
-- Scripts filter to finishers with non-zero placing and required time fields.
-- All parsing is tolerant: malformed lines are skipped.
-- Colors in the stacked histogram show earlier (red) to later (purple) start minutes.
+- **Vanilla JavaScript (ES6+)** - No frameworks, no transpilation
+- **ES Modules** - Native browser module support
+- **IndexedDB** - Client-side persistent storage (handles large files >50MB)
+- **SVG** - Scalable vector graphics generation
+- **HTML5 & CSS3** - Modern web standards
 
 ## Sample output
 
