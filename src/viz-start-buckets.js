@@ -3,6 +3,8 @@
  */
 
 import {
+	generateAttribution,
+	generateWatermark,
 	interpolateColor,
 	minutesToLabel,
 	parseNetTime,
@@ -192,6 +194,7 @@ export function generateStartBucketsSvg(records) {
   <desc>Stacked histogram showing the number of finishers in 1-minute net finish time buckets, segmented by start minute (color).</desc>
   ${gradientLegend}
   <rect x="0" y="0" width="${SVG_WIDTH}" height="${SVG_HEIGHT}" fill="#ffffff" />
+  ${generateWatermark(SVG_WIDTH, SVG_HEIGHT)}
   <line x1="${PADDING_LEFT}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${SVG_WIDTH - PADDING_RIGHT}" y2="${SVG_HEIGHT - PADDING_BOTTOM}" stroke="#333333" stroke-width="1.5" />
   <line x1="${PADDING_LEFT}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${PADDING_LEFT}" y2="${PADDING_TOP}" stroke="#333333" stroke-width="1.5" />
   ${tickElements.join("\n  ")}
@@ -202,5 +205,6 @@ export function generateStartBucketsSvg(records) {
   <rect x="${SVG_WIDTH - PADDING_RIGHT - 220}" y="${PADDING_TOP}" width="180" height="12" fill="url(#startGradient)" />
   <text x="${SVG_WIDTH - PADDING_RIGHT - 220}" y="${PADDING_TOP - 6}" text-anchor="start" font-size="12" fill="#333333">Earlier start</text>
   <text x="${SVG_WIDTH - PADDING_RIGHT - 40}" y="${PADDING_TOP - 6}" text-anchor="end" font-size="12" fill="#333333">Later start</text>
+  ${generateAttribution(SVG_WIDTH, SVG_HEIGHT)}
 </svg>`;
 }

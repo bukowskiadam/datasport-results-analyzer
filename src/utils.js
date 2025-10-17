@@ -205,3 +205,48 @@ export function interpolateColor(t) {
   const { r, g, b } = hslToRgb(hue, 1, 0.5);
   return `rgb(${r},${g},${b})`;
 }
+
+/**
+ * Generate watermark SVG element
+ * @param {number} width - SVG width
+ * @param {number} height - SVG height
+ * @returns {string} Watermark SVG markup
+ */
+export function generateWatermark(width, height) {
+  const url = 'bukowskiadam.github.io/datasport-results-analyzer';
+  const watermarks = [];
+  
+  // Create a grid of watermarks
+  const cols = 3;
+  const rows = 2;
+  const stepX = width / (cols + 1);
+  const stepY = height / (rows + 1);
+  
+  for (let row = 1; row <= rows; row++) {
+    for (let col = 1; col <= cols; col++) {
+      const x = col * stepX;
+      const y = row * stepY;
+      watermarks.push(
+        `<text x="${x}" y="${y}" text-anchor="middle" font-size="24" fill="#000000" opacity="0.03" font-weight="normal" transform="rotate(-15 ${x} ${y})">${url}</text>`
+      );
+    }
+  }
+  
+  return watermarks.join('\n  ');
+}
+
+/**
+ * Generate attribution SVG element
+ * @param {number} width - SVG width
+ * @param {number} height - SVG height
+ * @returns {string} Attribution SVG markup
+ */
+export function generateAttribution(width, height) {
+  const url = 'https://bukowskiadam.github.io/datasport-results-analyzer/';
+  const y = height - 5;
+  const x = width - 10;
+  
+  return `<a href="${url}" target="_blank">
+    <text x="${x}" y="${y}" text-anchor="end" font-size="10" fill="#666666">Created with ${url}</text>
+  </a>`;
+}

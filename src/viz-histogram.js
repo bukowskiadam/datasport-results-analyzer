@@ -2,7 +2,13 @@
  * Histogram of net finish times visualization
  */
 
-import { minutesToLabel, parseNetTime, scaleLinear } from "./utils.js";
+import {
+	generateAttribution,
+	generateWatermark,
+	minutesToLabel,
+	parseNetTime,
+	scaleLinear,
+} from "./utils.js";
 
 const SVG_WIDTH = 1200;
 const SVG_HEIGHT = 600;
@@ -116,6 +122,7 @@ export function generateHistogramSvg(records) {
   <title>Histogram of net finish times</title>
   <desc>Bar chart showing the number of finishers in one-minute buckets of net time.</desc>
   <rect x="0" y="0" width="${SVG_WIDTH}" height="${SVG_HEIGHT}" fill="#ffffff" />
+  ${generateWatermark(SVG_WIDTH, SVG_HEIGHT)}
   <line x1="${PADDING_LEFT}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${SVG_WIDTH - PADDING_RIGHT}" y2="${SVG_HEIGHT - PADDING_BOTTOM}" stroke="#333333" stroke-width="1.5" />
   <line x1="${PADDING_LEFT}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${PADDING_LEFT}" y2="${PADDING_TOP}" stroke="#333333" stroke-width="1.5" />
   ${tickElements.join("\n  ")}
@@ -123,5 +130,6 @@ export function generateHistogramSvg(records) {
   ${barElements}
   <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Net finish time (1-minute buckets, labels every 10 min)</text>
   <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">Number of finishers</text>
+  ${generateAttribution(SVG_WIDTH, SVG_HEIGHT)}
 </svg>`;
 }

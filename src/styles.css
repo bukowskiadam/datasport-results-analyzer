@@ -176,6 +176,9 @@ header p {
   border: 1px solid var(--border-color);
   border-radius: 4px;
   background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .svg-container svg {
