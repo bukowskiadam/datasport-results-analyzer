@@ -49,6 +49,7 @@ const distanceFilterSection = document.getElementById(
 );
 const distanceSelect = document.getElementById("distance-select");
 const distanceInfo = document.getElementById("distance-info");
+const bucketSizeSelect = document.getElementById("bucket-size-select");
 
 // Visualization containers
 const nettoTimesContainer = document.getElementById("viz-netto-times");
@@ -105,7 +106,7 @@ function setupDistanceFilter(data) {
 	availableDistances = getUniqueDistances(data);
 
 	// Always show the filter section
-	distanceFilterSection.style.display = "block";
+	distanceFilterSection.style.display = "flex";
 
 	// Populate select options
 	distanceSelect.innerHTML = '<option value="">All Distances</option>';
@@ -175,6 +176,7 @@ function generateVisualizations(data) {
 
 		// Get filtered data
 		const filteredData = getFilteredData();
+		const bucketSize = Number.parseInt(bucketSizeSelect.value, 10);
 
 		// Generate net times visualization
 		const nettoTimesSvg = generateNettoTimesSvg(filteredData);
@@ -182,12 +184,12 @@ function generateVisualizations(data) {
 		generatedSvgs["netto-times"] = nettoTimesSvg;
 
 		// Generate histogram visualization
-		const histogramSvg = generateHistogramSvg(filteredData);
+		const histogramSvg = generateHistogramSvg(filteredData, bucketSize);
 		histogramContainer.innerHTML = histogramSvg;
 		generatedSvgs["histogram"] = histogramSvg;
 
 		// Generate start buckets visualization
-		const startBucketsSvg = generateStartBucketsSvg(filteredData);
+		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize);
 		startBucketsContainer.innerHTML = startBucketsSvg;
 		generatedSvgs["start-buckets"] = startBucketsSvg;
 
@@ -206,6 +208,7 @@ function regenerateVisualizations() {
 	}
 
 	const filteredData = getFilteredData();
+	const bucketSize = Number.parseInt(bucketSizeSelect.value, 10);
 	updateDistanceInfo(filteredData);
 
 	try {
@@ -214,11 +217,11 @@ function regenerateVisualizations() {
 		nettoTimesContainer.innerHTML = nettoTimesSvg;
 		generatedSvgs["netto-times"] = nettoTimesSvg;
 
-		const histogramSvg = generateHistogramSvg(filteredData);
+		const histogramSvg = generateHistogramSvg(filteredData, bucketSize);
 		histogramContainer.innerHTML = histogramSvg;
 		generatedSvgs["histogram"] = histogramSvg;
 
-		const startBucketsSvg = generateStartBucketsSvg(filteredData);
+		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize);
 		startBucketsContainer.innerHTML = startBucketsSvg;
 		generatedSvgs["start-buckets"] = startBucketsSvg;
 	} catch (error) {
@@ -621,6 +624,11 @@ async function init() {
 
 	// Distance filter change
 	distanceSelect.addEventListener("change", () => {
+		regenerateVisualizations();
+	});
+
+	// Bucket size filter change
+	bucketSizeSelect.addEventListener("change", () => {
 		regenerateVisualizations();
 	});
 

@@ -436,7 +436,6 @@ footer a:hover {
 
 .data-info {
   padding: 15px;
-  margin-bottom: 20px;
   background-color: #e8f5e9;
   border: 1px solid #4caf50;
   border-radius: 6px;
@@ -451,6 +450,9 @@ footer a:hover {
   border: 2px solid var(--primary-color);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .filter-group {
@@ -591,6 +593,7 @@ footer a:hover {
   border-radius: 3px;
   outline: none;
   transition: background-color 0.2s;
+  cursor: text;
 }
 
 .result-name:hover {

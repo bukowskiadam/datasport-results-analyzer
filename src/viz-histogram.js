@@ -16,9 +16,10 @@ const SVG_HEIGHT = 600;
 /**
  * Generate histogram of net finish times SVG
  * @param {Array} records - Race results data
+ * @param {number} bucketSizeSeconds - Bucket size in seconds (default: 60)
  * @returns {string} SVG markup
  */
-export function generateHistogramSvg(records) {
+export function generateHistogramSvg(records, bucketSizeSeconds = 60) {
 	const PADDING_LEFT = 70;
 	const PADDING_RIGHT = 30;
 	const PADDING_TOP = 40;
@@ -43,7 +44,7 @@ export function generateHistogramSvg(records) {
 	const timesInMinutes = timesInSeconds.map((value) => value / 60);
 	const minMinute = Math.floor(Math.min(...timesInMinutes));
 	const maxMinute = Math.ceil(Math.max(...timesInMinutes));
-	const binSizeMinutes = 1;
+	const binSizeMinutes = bucketSizeSeconds / 60;
 	const binCount = Math.max(
 		1,
 		Math.ceil((maxMinute - minMinute) / binSizeMinutes) + 1,

@@ -18,9 +18,10 @@ const SVG_HEIGHT = 600;
 /**
  * Generate stacked histogram of start buckets SVG
  * @param {Array} records - Race results data
+ * @param {number} bucketSizeSeconds - Bucket size in seconds (default: 60)
  * @returns {string} SVG markup
  */
-export function generateStartBucketsSvg(records) {
+export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
 	const PADDING_LEFT = 70;
 	const PADDING_RIGHT = 30;
 	const PADDING_TOP = 40;
@@ -66,7 +67,7 @@ export function generateStartBucketsSvg(records) {
 		...runners.map((runner) => runner.startSecond),
 	);
 
-	const binSizeMinutes = 1;
+	const binSizeMinutes = bucketSizeSeconds / 60;
 	const binCount = Math.max(
 		1,
 		Math.ceil((maxFinishMinute - minFinishMinute) / binSizeMinutes) + 1,
