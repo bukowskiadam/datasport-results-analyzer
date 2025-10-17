@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Datasport Results Analyzer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🏃 Datasport Results Analyzer</h1>
+        <p>Analyze and visualize race results from datasport.pl</p>
+      </header>
+
+      <main>
+        <section class="input-section">
+          <div class="input-group">
+            <label for="datasport-url">Enter datasport.pl results URL:</label>
+            <input
+              type="url"
+              id="datasport-url"
+              placeholder="https://wyniki.datasport.pl/results123456/..."
+              aria-label="Datasport URL input"
+            />
+            <button id="prepare-download-btn" type="button">
+              Prepare Download
+            </button>
+          </div>
+          <div
+            id="error-message"
+            class="error-message"
+            role="alert"
+            aria-live="polite"
+          ></div>
+
+          <div
+            id="manual-download-section"
+            class="manual-section"
+            style="display: none"
+          >
+            <h3>📥 Manual Download Required</h3>
+            <p class="info-text">
+              Due to CORS restrictions, please download the results file
+              manually:
+            </p>
+            <ol class="instructions">
+              <li>
+                Click the button below to open the results.json file in a new
+                tab
+              </li>
+              <li>
+                Save the file (usually Ctrl/Cmd + S or right-click → Save)
+              </li>
+              <li>Upload the saved file using the area below</li>
+            </ol>
+            <button
+              id="open-json-btn"
+              type="button"
+              class="primary-btn"
+              disabled
+            >
+              📄 Open results.json in New Tab
+            </button>
+          </div>
+
+          <div id="upload-section" class="upload-section" style="display: none">
+            <div id="drop-zone" class="drop-zone">
+              <div class="drop-zone-content">
+                <svg
+                  class="upload-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <p class="drop-text">Drag & drop results.json here</p>
+                <p class="drop-text-or">or</p>
+                <button type="button" id="browse-btn" class="secondary-btn">
+                  Browse Files
+                </button>
+                <input
+                  type="file"
+                  id="file-input"
+                  accept=".json,application/json"
+                  style="display: none"
+                />
+              </div>
+            </div>
+            <div id="file-info" class="file-info" style="display: none"></div>
+          </div>
+        </section>
+
+        <section
+          id="results-section"
+          class="results-section"
+          style="display: none"
+        >
+          <h2>Race Results Visualizations</h2>
+
+          <div class="visualization">
+            <h3>Net Finish Times</h3>
+            <p class="description">Each dot represents a finisher's net time</p>
+            <div id="viz-netto-times" class="svg-container"></div>
+            <button class="download-btn" data-viz="netto-times">
+              Download SVG
+            </button>
+          </div>
+
+          <div class="visualization">
+            <h3>Histogram of Net Finish Times</h3>
+            <p class="description">
+              Distribution of finishers in 1-minute buckets
+            </p>
+            <div id="viz-histogram" class="svg-container"></div>
+            <button class="download-btn" data-viz="histogram">
+              Download SVG
+            </button>
+          </div>
+
+          <div class="visualization">
+            <h3>Start Time vs Finish Time</h3>
+            <p class="description">
+              Stacked histogram showing finish times segmented by start time
+            </p>
+            <div id="viz-start-buckets" class="svg-container"></div>
+            <button class="download-btn" data-viz="start-buckets">
+              Download SVG
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <p>
+          Data source:
+          <a href="https://www.datasport.com" target="_blank" rel="noopener"
+            >datasport.com</a
+          >
+        </p>
+      </footer>
+    </div>
+
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>
