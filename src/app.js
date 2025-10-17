@@ -4,6 +4,17 @@
 
 import { getJsonUrl } from "./datasport-fetcher.js";
 import {
+	clearAllResults,
+	deleteResult,
+	formatSize,
+	getAllResults,
+	getResult,
+	getStorageInfo,
+	initStorage,
+	saveResult,
+	updateResult,
+} from "./storage.js";
+import {
 	generateHistogramSvg,
 	generateNettoTimesSvg,
 	generateStartBucketsSvg,
@@ -25,6 +36,11 @@ const dropZone = document.getElementById("drop-zone");
 const fileInput = document.getElementById("file-input");
 const browseBtn = document.getElementById("browse-btn");
 const fileInfo = document.getElementById("file-info");
+
+// Stored results elements
+const storedResultsList = document.getElementById("stored-results-list");
+const storageUsageEl = document.getElementById("storage-usage");
+const clearAllBtn = document.getElementById("clear-all-btn");
 
 // Visualization containers
 const nettoTimesContainer = document.getElementById("viz-netto-times");
@@ -170,6 +186,16 @@ async function handleFileUpload(file) {
 		fileInfo.style.display = "block";
 		fileInfo.textContent = `✓ Loaded ${data.length} results from ${file.name}`;
 
+		// Save to storage
+		try {
+			const sourceUrl = urlInput.value.trim() || null;
+			await saveResult(file.name, data, sourceUrl, file.size);
+			await loadStoredResults();
+		} catch (storageError) {
+			console.error("Failed to save to storage:", storageError);
+			// Continue anyway - visualization still works
+		}
+
 		// Generate visualizations
 		generateVisualizations(data);
 
@@ -185,9 +211,205 @@ async function handleFileUpload(file) {
 }
 
 /**
+ * Load and display stored results
+ */
+async function loadStoredResults() {
+	try {
+		const results = await getAllResults();
+
+		if (results.length === 0) {
+			storedResultsList.innerHTML =
+				'<p class="empty-message">No stored results yet. Upload a file to get started.</p>';
+			clearAllBtn.style.display = "none";
+		} else {
+			storedResultsList.innerHTML = results
+				.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate))
+				.map((result) => createResultCard(result))
+				.join("");
+			clearAllBtn.style.display = "inline-block";
+		}
+
+		// Update storage info
+		await updateStorageInfo();
+	} catch (error) {
+		console.error("Failed to load stored results:", error);
+	}
+}
+
+/**
+ * Create HTML for a result card
+ * @param {Object} result - Result metadata
+ * @returns {string} HTML string
+ */
+function createResultCard(result) {
+	const date = new Date(result.uploadDate).toLocaleString();
+	const hasUrl = result.sourceUrl?.trim();
+	
+	return `
+		<div class="result-card" data-id="${result.id}">
+			<div class="result-card-header">
+				<div class="result-name" contenteditable="true" data-id="${result.id}" spellcheck="false">${result.name}</div>
+				<button class="delete-btn" data-id="${result.id}" title="Delete">×</button>
+			</div>
+			<div class="result-meta">
+				<div class="result-meta-item">
+					<span>📊 ${result.recordCount} records</span>
+				</div>
+				<div class="result-meta-item">
+					<span>💾 ${formatSize(result.size)}</span>
+				</div>
+				<div class="result-meta-item">
+					<span>📅 ${date}</span>
+				</div>
+				<div class="result-meta-item result-url">
+					${hasUrl ? `
+						<a href="${result.sourceUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open datasport page">🔗 View online</a>
+					` : `
+						<span class="no-url">No URL</span>
+					`}
+					<button class="edit-url-btn" data-id="${result.id}" title="${hasUrl ? 'Edit URL' : 'Add URL'}">✏️</button>
+				</div>
+			</div>
+		</div>
+	`;
+}
+
+/**
+ * Update storage usage display
+ */
+async function updateStorageInfo() {
+	try {
+		const { usage, quota } = await getStorageInfo();
+		if (quota > 0) {
+			const usagePercent = ((usage / quota) * 100).toFixed(1);
+			storageUsageEl.textContent = `Storage: ${formatSize(usage)} / ${formatSize(quota)} (${usagePercent}%)`;
+		}
+	} catch (error) {
+		console.error("Failed to get storage info:", error);
+	}
+}
+
+/**
+ * Handle clicking on a stored result card
+ * @param {number} id - Result ID
+ */
+async function handleStoredResultClick(id) {
+	try {
+		hideError();
+
+		const result = await getResult(id);
+		if (!result || !result.data) {
+			throw new Error("Result not found");
+		}
+
+		// Generate visualizations
+		generateVisualizations(result.data);
+
+		// Show info
+		fileInfo.style.display = "block";
+		fileInfo.textContent = `✓ Loaded ${result.recordCount} results from storage: ${result.name}`;
+
+		console.log(`Analyzed stored result: ${result.name}`);
+	} catch (error) {
+		console.error("Failed to load stored result:", error);
+		showError("Failed to load stored result. It may have been deleted.");
+	}
+}
+
+/**
+ * Handle deleting a stored result
+ * @param {number} id - Result ID
+ */
+async function handleDeleteResult(id) {
+	if (!confirm("Are you sure you want to delete this result?")) {
+		return;
+	}
+
+	try {
+		await deleteResult(id);
+		await loadStoredResults();
+		console.log(`Deleted result ID: ${id}`);
+	} catch (error) {
+		console.error("Failed to delete result:", error);
+		showError("Failed to delete result.");
+	}
+}
+
+/**
+ * Handle renaming a stored result
+ * @param {number} id - Result ID
+ * @param {string} newName - New name
+ */
+async function handleRenameResult(id, newName) {
+	if (!newName || !newName.trim()) {
+		await loadStoredResults(); // Reload to reset the name
+		return;
+	}
+
+	try {
+		await updateResult(id, { name: newName.trim() });
+		console.log(`Renamed result ID ${id} to: ${newName}`);
+	} catch (error) {
+		console.error("Failed to rename result:", error);
+		showError("Failed to rename result.");
+		await loadStoredResults();
+	}
+}
+
+/**
+ * Handle editing URL for a stored result
+ * @param {number} id - Result ID
+ */
+async function handleEditUrl(id) {
+	try {
+		const result = await getResult(id);
+		if (!result) {
+			throw new Error("Result not found");
+		}
+
+		const newUrl = prompt("Enter the datasport.pl URL:", result.sourceUrl || "");
+		
+		if (newUrl === null) {
+			// User cancelled
+			return;
+		}
+
+		await updateResult(id, { sourceUrl: newUrl.trim() || null });
+		await loadStoredResults();
+		console.log(`Updated URL for result ID ${id}`);
+	} catch (error) {
+		console.error("Failed to update URL:", error);
+		showError("Failed to update URL.");
+	}
+}
+
+/**
+ * Handle clearing all stored results
+ */
+async function handleClearAll() {
+	if (
+		!confirm(
+			"Are you sure you want to delete ALL stored results? This cannot be undone.",
+		)
+	) {
+		return;
+	}
+
+	try {
+		await clearAllResults();
+		await loadStoredResults();
+		fileInfo.style.display = "none";
+		console.log("Cleared all stored results");
+	} catch (error) {
+		console.error("Failed to clear all results:", error);
+		showError("Failed to clear all results.");
+	}
+}
+
+/**
  * Initialize the application
  */
-function init() {
+async function init() {
 	// Prepare download button click handler
 	prepareDownloadBtn.addEventListener("click", handlePrepareDownload);
 
@@ -252,6 +474,53 @@ function init() {
 			handleFileUpload(file);
 		}
 	});
+
+	// Clear all button
+	clearAllBtn.addEventListener("click", handleClearAll);
+
+	// Stored results list event delegation
+	storedResultsList.addEventListener("click", (e) => {
+		const deleteBtn = e.target.closest(".delete-btn");
+		const editUrlBtn = e.target.closest(".edit-url-btn");
+		const card = e.target.closest(".result-card");
+
+		if (deleteBtn) {
+			e.stopPropagation();
+			const id = Number.parseInt(deleteBtn.dataset.id, 10);
+			handleDeleteResult(id);
+		} else if (editUrlBtn) {
+			e.stopPropagation();
+			const id = Number.parseInt(editUrlBtn.dataset.id, 10);
+			handleEditUrl(id);
+		} else if (card && !e.target.closest(".result-name")) {
+			const id = Number.parseInt(card.dataset.id, 10);
+			handleStoredResultClick(id);
+		}
+	});
+
+	// Handle name editing with blur and enter key
+	storedResultsList.addEventListener("blur", async (e) => {
+		if (e.target.classList.contains("result-name")) {
+			const id = Number.parseInt(e.target.dataset.id, 10);
+			const newName = e.target.textContent.trim();
+			await handleRenameResult(id, newName);
+		}
+	}, true);
+
+	storedResultsList.addEventListener("keydown", (e) => {
+		if (e.target.classList.contains("result-name") && e.key === "Enter") {
+			e.preventDefault();
+			e.target.blur();
+		}
+	});
+
+	// Initialize storage and load stored results
+	try {
+		await initStorage();
+		await loadStoredResults();
+	} catch (error) {
+		console.error("Failed to initialize storage:", error);
+	}
 
 	console.log("Datasport Results Analyzer initialized");
 }

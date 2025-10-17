@@ -95,6 +95,34 @@
           </div>
         </section>
 
+        <section id="stored-results-section" class="stored-results-section">
+          <div class="section-header">
+            <h2>💾 Stored Results</h2>
+            <div class="header-actions">
+              <span id="storage-usage"></span>
+              <button
+                id="clear-all-btn"
+                type="button"
+                class="danger-btn-small"
+                style="display: none"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
+          <div id="stored-results-list" class="stored-results-list">
+            <p class="empty-message">
+              No stored results yet. Upload a file to get started.
+            </p>
+          </div>
+          <div class="storage-info-footer">
+            <small
+              >Note: IndexedDB uses compression and optimization. Individual
+              file sizes may not sum to total usage.</small
+            >
+          </div>
+        </section>
+
         <section
           id="results-section"
           class="results-section"
@@ -138,8 +166,8 @@
       <footer>
         <p>
           Data source:
-          <a href="https://www.datasport.com" target="_blank" rel="noopener"
-            >datasport.com</a
+          <a href="https://www.datasport.pl" target="_blank" rel="noopener"
+            >datasport.pl</a
           >
         </p>
       </footer>
