@@ -1,16 +1,10 @@
 {
   "name": "datasport-results-analyzer",
   "version": "1.0.0",
-  "description": "Generate SVG visualizations (netto times, histogram, start buckets) from results.json",
+  "description": "Web-based application for analyzing and visualizing race results from datasport.pl",
   "type": "module",
   "private": true,
   "license": "MIT",
-  "scripts": {
-    "netto-times": "node src/netto-times.js",
-    "histogram-netto-times": "node src/histogram-netto-times.js",
-    "start-buckets-stacked": "node src/start-buckets-stacked.js",
-    "graphs": "node src/netto-times.js && node src/histogram-netto-times.js && node src/start-buckets-stacked.js",
-    "clean": "rm -f *.svg"
-  },
+  "scripts": {},
   "devDependencies": {}
 }
