@@ -42,11 +42,13 @@ npm run graphs
 
 This simply chains the three Node scripts (no external runner dependency) and produces the SVG files.
 
-Outputs are written alongside the scripts:
+Outputs are written to the project root:
 
 - `netto-times.svg`
 - `histogram-netto-times.svg`
 - `start-buckets-stacked.svg`
+
+Scripts are located in the `src/` directory.
 
 ## Run individual scripts
 

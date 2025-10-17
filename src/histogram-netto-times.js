@@ -5,8 +5,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATA_FILE = path.join(__dirname, 'results.json');
-const OUTPUT_FILE = path.join(__dirname, 'histogram-netto-times.svg');
+const DATA_FILE = path.join(__dirname, '..', 'results.json');
+const OUTPUT_FILE = path.join(__dirname, '..', 'histogram-netto-times.svg');
 
 const SVG_WIDTH = 1200;
 const SVG_HEIGHT = 600;

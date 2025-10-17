@@ -6,10 +6,10 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "netto-times": "node netto-times.js",
-    "histogram-netto-times": "node histogram-netto-times.js",
-    "start-buckets-stacked": "node start-buckets-stacked.js",
-    "graphs": "node netto-times.js && node histogram-netto-times.js && node start-buckets-stacked.js",
+    "netto-times": "node src/netto-times.js",
+    "histogram-netto-times": "node src/histogram-netto-times.js",
+    "start-buckets-stacked": "node src/start-buckets-stacked.js",
+    "graphs": "node src/netto-times.js && node src/histogram-netto-times.js && node src/start-buckets-stacked.js",
     "clean": "rm -f *.svg"
   },
   "devDependencies": {}
