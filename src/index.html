@@ -123,27 +123,36 @@
           </div>
         </section>
 
-        <div
-          id="distance-filter-section"
-          class="distance-filter-section"
-          style="display: none"
-        >
-          <div id="data-info" class="data-info" style="display: none"></div>
-          <div class="filter-group">
-            <label for="distance-select">Select Distance:</label>
-            <select id="distance-select" aria-label="Distance filter">
-              <option value="">All Distances</option>
-            </select>
-            <span id="distance-info" class="distance-info"></span>
+        <div id="data-info" class="data-info" style="display: none"></div>
+
+        <div id="filters-section" class="filters-section" style="display: none">
+          <div
+            id="filters-header"
+            class="filters-header"
+            role="button"
+            tabindex="0"
+            aria-expanded="true"
+          >
+            <span class="collapse-icon">▼</span>
+            <span id="filters-header-text" class="header-text">Settings</span>
           </div>
-          <div class="filter-group">
-            <label for="bucket-size-select">Histogram Bucket Size:</label>
-            <select id="bucket-size-select" aria-label="Bucket size filter">
-              <option value="15">15 seconds</option>
-              <option value="30">30 seconds</option>
-              <option value="60" selected>60 seconds</option>
-              <option value="120">120 seconds</option>
-            </select>
+          <div id="filters-content" class="filters-content">
+            <div class="filter-group">
+              <label for="distance-select">Select Distance:</label>
+              <select id="distance-select" aria-label="Distance filter">
+                <option value="">All Distances</option>
+              </select>
+              <span id="distance-info" class="distance-info"></span>
+            </div>
+            <div class="filter-group">
+              <label for="bucket-size-select">Histogram Bucket Size:</label>
+              <select id="bucket-size-select" aria-label="Bucket size filter">
+                <option value="15">15 seconds</option>
+                <option value="30">30 seconds</option>
+                <option value="60" selected>60 seconds</option>
+                <option value="120">120 seconds</option>
+              </select>
+            </div>
           </div>
         </div>
 

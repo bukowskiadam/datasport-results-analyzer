@@ -44,12 +44,13 @@ const storageUsageEl = document.getElementById("storage-usage");
 const clearAllBtn = document.getElementById("clear-all-btn");
 
 // Distance filter elements
-const distanceFilterSection = document.getElementById(
-	"distance-filter-section",
-);
+const filtersSection = document.getElementById("filters-section");
 const distanceSelect = document.getElementById("distance-select");
 const distanceInfo = document.getElementById("distance-info");
 const bucketSizeSelect = document.getElementById("bucket-size-select");
+const filtersHeader = document.getElementById("filters-header");
+const filtersHeaderText = document.getElementById("filters-header-text");
+const filtersContent = document.getElementById("filters-content");
 
 // Visualization containers
 const nettoTimesContainer = document.getElementById("viz-netto-times");
@@ -94,7 +95,8 @@ function hideError() {
  */
 function showResults() {
 	resultsSection.style.display = "block";
-	resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+	const dataInfo = document.getElementById("data-info");
+	dataInfo.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /**
@@ -106,7 +108,7 @@ function setupDistanceFilter(data) {
 	availableDistances = getUniqueDistances(data);
 
 	// Always show the filter section
-	distanceFilterSection.style.display = "flex";
+	filtersSection.style.display = "flex";
 
 	// Populate select options
 	distanceSelect.innerHTML = '<option value="">All Distances</option>';
@@ -314,6 +316,9 @@ async function handleFileUpload(file) {
 			dataInfo.textContent = `✓ Loaded ${finishers.length} results from ${file.name}`;
 		}
 
+		// Update filters header with filename
+		filtersHeaderText.textContent = file.name;
+
 		// Save to storage (save original data)
 		try {
 			const sourceUrl = urlInput.value.trim() || null;
@@ -449,6 +454,9 @@ async function handleStoredResultClick(id) {
 		} else {
 			dataInfo.textContent = `✓ Loaded ${finishers.length} results from storage: ${result.name}`;
 		}
+
+		// Update filters header with filename
+		filtersHeaderText.textContent = result.name;
 
 		console.log(`Analyzed stored result: ${result.name}`);
 	} catch (error) {
@@ -630,6 +638,20 @@ async function init() {
 	// Bucket size filter change
 	bucketSizeSelect.addEventListener("change", () => {
 		regenerateVisualizations();
+	});
+
+	// Filters toggle header
+	filtersHeader.addEventListener("click", () => {
+		const isExpanded = filtersHeader.getAttribute("aria-expanded") === "true";
+		filtersHeader.setAttribute("aria-expanded", !isExpanded);
+		filtersContent.classList.toggle("collapsed");
+	});
+
+	filtersHeader.addEventListener("keydown", (e) => {
+		if (e.key === "Enter" || e.key === " ") {
+			e.preventDefault();
+			filtersHeader.click();
+		}
 	});
 
 	// Stored results list event delegation
