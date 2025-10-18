@@ -74,6 +74,58 @@ let currentJsonUrl = null;
 // Store full dataset and current filter state
 let fullDataset = null;
 let availableDistances = [];
+let currentResultId = null;
+
+// Memory key for localStorage
+const MEMORY_KEY = 'datasport-analyzer-session';
+
+/**
+ * Save current session state to localStorage
+ */
+function saveSessionState() {
+	if (!currentResultId) return;
+	
+	try {
+		const state = {
+			resultId: currentResultId,
+			distance: distanceSelect.value,
+			bucketSize: bucketSizeSelect.value,
+			runner: runnerSelect.value,
+			timestamp: Date.now(),
+		};
+		localStorage.setItem(MEMORY_KEY, JSON.stringify(state));
+	} catch (error) {
+		console.error('Failed to save session state:', error);
+	}
+}
+
+/**
+ * Load session state from localStorage
+ * @returns {Object|null} Saved session state or null
+ */
+function loadSessionState() {
+	try {
+		const stateJson = localStorage.getItem(MEMORY_KEY);
+		if (!stateJson) return null;
+		
+		const state = JSON.parse(stateJson);
+		return state;
+	} catch (error) {
+		console.error('Failed to load session state:', error);
+		return null;
+	}
+}
+
+/**
+ * Clear session state from localStorage
+ */
+function clearSessionState() {
+	try {
+		localStorage.removeItem(MEMORY_KEY);
+	} catch (error) {
+		console.error('Failed to clear session state:', error);
+	}
+}
 
 /**
  * Show error message to user
@@ -106,8 +158,9 @@ function showResults() {
 /**
  * Setup runner selector
  * @param {Array} data - Full race results data
+ * @param {string} [preselectedRunner] - Optional runner index to preselect
  */
-function setupRunnerSelector(data) {
+function setupRunnerSelector(data, preselectedRunner = null) {
 	// Populate runner select with all runners
 	runnerSelect.innerHTML = '<option value="">None</option>';
 	
@@ -133,13 +186,19 @@ function setupRunnerSelector(data) {
 		option.textContent = runner.displayName;
 		runnerSelect.appendChild(option);
 	}
+	
+	// Restore preselected runner if provided and valid
+	if (preselectedRunner && runners.some(r => r.index.toString() === preselectedRunner)) {
+		runnerSelect.value = preselectedRunner;
+	}
 }
 
 /**
  * Setup distance filter UI
  * @param {Array} data - Full race results data
+ * @param {string} [preselectedDistance] - Optional distance to preselect
  */
-function setupDistanceFilter(data) {
+function setupDistanceFilter(data, preselectedDistance = null) {
 	fullDataset = data;
 	availableDistances = getUniqueDistances(data);
 
@@ -159,6 +218,10 @@ function setupDistanceFilter(data) {
 	if (availableDistances.length === 1) {
 		distanceSelect.value = availableDistances[0].value;
 		distanceSelect.disabled = true;
+	} else if (preselectedDistance && availableDistances.some(d => d.value === preselectedDistance)) {
+		// Restore preselected distance if valid
+		distanceSelect.value = preselectedDistance;
+		distanceSelect.disabled = false;
 	} else {
 		distanceSelect.value = "";
 		distanceSelect.disabled = false;
@@ -206,14 +269,20 @@ function getFilteredData() {
 /**
  * Generate and display all visualizations
  * @param {Array} data - Race results data
+ * @param {Object} [savedState] - Optional saved state to restore filters
  */
-function generateVisualizations(data) {
+function generateVisualizations(data, savedState = null) {
 	try {
+		// Restore bucket size if provided
+		if (savedState?.bucketSize) {
+			bucketSizeSelect.value = savedState.bucketSize;
+		}
+		
 		// Setup distance filter with full dataset
-		setupDistanceFilter(data);
+		setupDistanceFilter(data, savedState?.distance);
 		
 		// Setup runner selector
-		setupRunnerSelector(data);
+		setupRunnerSelector(data, savedState?.runner);
 
 		// Get filtered data
 		const filteredData = getFilteredData();
@@ -242,6 +311,9 @@ function generateVisualizations(data) {
 		generatedSvgs["start-vs-finish"] = startVsFinishSvg;
 
 		showResults();
+		
+		// Save session state after successful visualization
+		saveSessionState();
 	} catch (error) {
 		throw new Error(`Failed to generate visualizations: ${error.message}`);
 	}
@@ -278,6 +350,9 @@ function regenerateVisualizations() {
 		const startVsFinishSvg = generateStartVsFinishSvg(filteredData, selectedRunner);
 		startVsFinishContainer.innerHTML = startVsFinishSvg;
 		generatedSvgs["start-vs-finish"] = startVsFinishSvg;
+		
+		// Save session state after regenerating
+		saveSessionState();
 	} catch (error) {
 		console.error("Failed to regenerate visualizations:", error);
 		showError(`Failed to regenerate visualizations: ${error.message}`);
@@ -374,7 +449,8 @@ async function handleFileUpload(file) {
 		// Save to storage (save original data)
 		try {
 			const sourceUrl = urlInput.value.trim() || null;
-			await saveResult(file.name, data, sourceUrl, file.size);
+			const resultId = await saveResult(file.name, data, sourceUrl, file.size);
+			currentResultId = resultId;
 			await loadStoredResults();
 		} catch (storageError) {
 			console.error("Failed to save to storage:", storageError);
@@ -481,8 +557,9 @@ async function updateStorageInfo() {
 /**
  * Handle clicking on a stored result card
  * @param {number} id - Result ID
+ * @param {Object} [savedState] - Optional saved state to restore filters
  */
-async function handleStoredResultClick(id) {
+async function handleStoredResultClick(id, savedState = null) {
 	try {
 		hideError();
 
@@ -490,13 +567,16 @@ async function handleStoredResultClick(id) {
 		if (!result || !result.data) {
 			throw new Error("Result not found");
 		}
+		
+		// Update current result ID
+		currentResultId = id;
 
 		// Filter to only include finishers
 		const finishers = filterFinishers(result.data);
 		const dnfCount = result.data.length - finishers.length;
 
-		// Generate visualizations
-		generateVisualizations(finishers);
+		// Generate visualizations with saved state if provided
+		generateVisualizations(finishers, savedState);
 
 		// Show info in distance filter section
 		const dataInfo = document.getElementById("data-info");
@@ -528,6 +608,13 @@ async function handleDeleteResult(id) {
 
 	try {
 		await deleteResult(id);
+		
+		// Clear session state if we deleted the current result
+		if (currentResultId === id) {
+			currentResultId = null;
+			clearSessionState();
+		}
+		
 		await loadStoredResults();
 		console.log(`Deleted result ID: ${id}`);
 	} catch (error) {
@@ -601,6 +688,11 @@ async function handleClearAll() {
 
 	try {
 		await clearAllResults();
+		
+		// Clear session state since all results are gone
+		currentResultId = null;
+		clearSessionState();
+		
 		await loadStoredResults();
 		fileInfo.style.display = "none";
 		console.log("Cleared all stored results");
@@ -755,6 +847,19 @@ async function init() {
 	try {
 		await initStorage();
 		await loadStoredResults();
+		
+		// Try to restore last session
+		const savedState = loadSessionState();
+		if (savedState?.resultId) {
+			console.log('Restoring last session:', savedState);
+			try {
+				await handleStoredResultClick(savedState.resultId, savedState);
+			} catch (error) {
+				console.error('Failed to restore last session:', error);
+				// Clear invalid session state
+				clearSessionState();
+			}
+		}
 	} catch (error) {
 		console.error("Failed to initialize storage:", error);
 	}
