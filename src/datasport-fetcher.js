@@ -29,6 +29,16 @@ export function getJsonUrl(url) {
 }
 
 /**
+ * Extract the results ID from a datasport.pl URL
+ * @param {string} url - The datasport.pl URL
+ * @returns {string|null} The results ID (e.g., "results5710") or null if not found
+ */
+export function extractResultsId(url) {
+  const match = url.match(/results(\d+)/i);
+  return match ? `results${match[1]}` : null;
+}
+
+/**
  * Set the CORS proxy to use
  * @param {string} proxyKey - Key from CORS_PROXIES ('none', 'corsproxy', 'allorigins')
  */

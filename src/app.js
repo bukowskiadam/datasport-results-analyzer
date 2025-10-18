@@ -2,7 +2,7 @@
  * Main application controller for the web interface
  */
 
-import { getJsonUrl } from "./datasport-fetcher.js";
+import { extractResultsId, getJsonUrl } from "./datasport-fetcher.js";
 import {
 	clearAllResults,
 	deleteResult,
@@ -21,6 +21,23 @@ import {
 	generateStartBucketsSvg,
 	generateStartVsFinishSvg,
 } from "./visualizations.js";
+
+// Umami event tracking helper
+function trackEvent(eventName, eventData = {}) {
+	// Skip tracking on localhost/development
+	if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+		console.log('[Dev] Skipping event:', eventName, eventData);
+		return;
+	}
+	
+	if (window.umami) {
+		try {
+			window.umami.track(eventName, eventData);
+		} catch (error) {
+			console.warn('Failed to track event:', eventName, error);
+		}
+	}
+}
 
 // DOM elements
 const urlInput = document.getElementById("datasport-url");
@@ -212,6 +229,8 @@ function createRunnerSelector(selectedValue = '') {
 	
 	// Add change listener
 	select.addEventListener('change', () => {
+		const isSelected = select.value !== '';
+		trackEvent(isSelected ? 'filter-runner-selected' : 'filter-runner-cleared');
 		regenerateVisualizations();
 	});
 	
@@ -227,6 +246,7 @@ function createRunnerSelector(selectedValue = '') {
 	`;
 	
 	removeBtn.addEventListener('click', () => {
+		trackEvent('filter-runner-removed');
 		row.remove();
 		regenerateVisualizations();
 		updateAddButtonVisibility();
@@ -504,6 +524,12 @@ function handlePrepareDownload() {
 		const jsonUrl = getJsonUrl(url);
 		currentJsonUrl = jsonUrl;
 
+		// Track URL preparation event
+		const resultsId = extractResultsId(url);
+		if (resultsId) {
+			trackEvent('url-prepared', { event: resultsId });
+		}
+
 		manualDownloadSection.style.display = "block";
 		uploadSection.style.display = "block";
 		openJsonBtn.disabled = false;
@@ -544,6 +570,9 @@ async function handleFileUpload(file) {
 		// Filter to only include finishers (those with czasnetto)
 		const finishers = filterFinishers(data);
 		const dnfCount = data.length - finishers.length;
+
+		// Track file upload event
+		trackEvent('data-loaded-upload');
 
 		// Show success message in distance filter section
 		const dataInfo = document.getElementById("data-info");
@@ -692,7 +721,10 @@ async function handleStoredResultClick(id, savedState = null) {
 		// Generate visualizations with saved state if available
 		generateVisualizations(finishers, stateToRestore);
 
-		// Show info in distance filter section
+		// Track stored result loading event
+		trackEvent('data-loaded-storage');
+
+		// Show success message in distance filter section
 		const dataInfo = document.getElementById("data-info");
 		dataInfo.style.display = "block";
 		if (dnfCount > 0) {
@@ -701,7 +733,7 @@ async function handleStoredResultClick(id, savedState = null) {
 			dataInfo.textContent = `✓ Loaded ${finishers.length} results from storage: ${result.name}`;
 		}
 
-		// Update filters header with filename
+		// Update filters header with result name
 		filtersHeaderText.textContent = result.name;
 
 		console.log(`Analyzed stored result: ${result.name}`);
@@ -890,16 +922,25 @@ async function init() {
 
 	// Distance filter change
 	distanceSelect.addEventListener("change", () => {
+		const selectedDistance = distanceSelect.value;
+		trackEvent('filter-distance-changed', {
+			distance: selectedDistance === '' ? 'all' : selectedDistance
+		});
 		regenerateVisualizations();
 	});
 
 	// Bucket size filter change
 	bucketSizeSelect.addEventListener("change", () => {
+		const bucketSize = bucketSizeSelect.value;
+		trackEvent('filter-bucket-size-changed', {
+			value: bucketSize
+		});
 		regenerateVisualizations();
 	});
 
 	// Add runner button click
 	addRunnerBtn.addEventListener("click", () => {
+		trackEvent('filter-runner-input-added');
 		runnerSelectorsContainer.appendChild(createRunnerSelector());
 		updateAddButtonVisibility();
 	});
