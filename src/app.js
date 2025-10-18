@@ -49,6 +49,7 @@ const filtersSection = document.getElementById("filters-section");
 const distanceSelect = document.getElementById("distance-select");
 const distanceInfo = document.getElementById("distance-info");
 const bucketSizeSelect = document.getElementById("bucket-size-select");
+const runnerSelect = document.getElementById("runner-select");
 const filtersHeader = document.getElementById("filters-header");
 const filtersHeaderText = document.getElementById("filters-header-text");
 const filtersContent = document.getElementById("filters-content");
@@ -100,6 +101,38 @@ function showResults() {
 	resultsSection.style.display = "block";
 	const dataInfo = document.getElementById("data-info");
 	dataInfo.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/**
+ * Setup runner selector
+ * @param {Array} data - Full race results data
+ */
+function setupRunnerSelector(data) {
+	// Populate runner select with all runners
+	runnerSelect.innerHTML = '<option value="">None</option>';
+	
+	// Create list of runners with their names and bib numbers
+	const runners = data
+		.map((entry, index) => {
+			const name = `${entry.nazwisko || ""} ${entry.imie || ""}`.trim();
+			const bib = entry.numer || "";
+			return {
+				index,
+				name,
+				bib,
+				displayName: bib ? `${name} (#${bib})` : name,
+				entry,
+			};
+		})
+		.filter((r) => r.name)
+		.sort((a, b) => a.name.localeCompare(b.name));
+
+	for (const runner of runners) {
+		const option = document.createElement("option");
+		option.value = runner.index.toString();
+		option.textContent = runner.displayName;
+		runnerSelect.appendChild(option);
+	}
 }
 
 /**
@@ -178,28 +211,33 @@ function generateVisualizations(data) {
 	try {
 		// Setup distance filter with full dataset
 		setupDistanceFilter(data);
+		
+		// Setup runner selector
+		setupRunnerSelector(data);
 
 		// Get filtered data
 		const filteredData = getFilteredData();
 		const bucketSize = Number.parseInt(bucketSizeSelect.value, 10);
+		const selectedRunnerIndex = runnerSelect.value ? Number.parseInt(runnerSelect.value, 10) : null;
+		const selectedRunner = selectedRunnerIndex !== null ? data[selectedRunnerIndex] : null;
 
 		// Generate net times visualization
-		const nettoTimesSvg = generateNettoTimesSvg(filteredData);
+		const nettoTimesSvg = generateNettoTimesSvg(filteredData, selectedRunner);
 		nettoTimesContainer.innerHTML = nettoTimesSvg;
 		generatedSvgs["netto-times"] = nettoTimesSvg;
 
 		// Generate histogram visualization
-		const histogramSvg = generateHistogramSvg(filteredData, bucketSize);
+		const histogramSvg = generateHistogramSvg(filteredData, bucketSize, selectedRunner);
 		histogramContainer.innerHTML = histogramSvg;
 		generatedSvgs["histogram"] = histogramSvg;
 
 		// Generate start buckets visualization
-		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize);
+		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize, selectedRunner);
 		startBucketsContainer.innerHTML = startBucketsSvg;
 		generatedSvgs["start-buckets"] = startBucketsSvg;
 
 		// Generate start vs finish visualization
-		const startVsFinishSvg = generateStartVsFinishSvg(filteredData);
+		const startVsFinishSvg = generateStartVsFinishSvg(filteredData, selectedRunner);
 		startVsFinishContainer.innerHTML = startVsFinishSvg;
 		generatedSvgs["start-vs-finish"] = startVsFinishSvg;
 
@@ -219,23 +257,25 @@ function regenerateVisualizations() {
 
 	const filteredData = getFilteredData();
 	const bucketSize = Number.parseInt(bucketSizeSelect.value, 10);
+	const selectedRunnerIndex = runnerSelect.value ? Number.parseInt(runnerSelect.value, 10) : null;
+	const selectedRunner = selectedRunnerIndex !== null ? fullDataset[selectedRunnerIndex] : null;
 	updateDistanceInfo(filteredData);
 
 	try {
 		// Regenerate all visualizations with filtered data
-		const nettoTimesSvg = generateNettoTimesSvg(filteredData);
+		const nettoTimesSvg = generateNettoTimesSvg(filteredData, selectedRunner);
 		nettoTimesContainer.innerHTML = nettoTimesSvg;
 		generatedSvgs["netto-times"] = nettoTimesSvg;
 
-		const histogramSvg = generateHistogramSvg(filteredData, bucketSize);
+		const histogramSvg = generateHistogramSvg(filteredData, bucketSize, selectedRunner);
 		histogramContainer.innerHTML = histogramSvg;
 		generatedSvgs["histogram"] = histogramSvg;
 
-		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize);
+		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize, selectedRunner);
 		startBucketsContainer.innerHTML = startBucketsSvg;
 		generatedSvgs["start-buckets"] = startBucketsSvg;
 
-		const startVsFinishSvg = generateStartVsFinishSvg(filteredData);
+		const startVsFinishSvg = generateStartVsFinishSvg(filteredData, selectedRunner);
 		startVsFinishContainer.innerHTML = startVsFinishSvg;
 		generatedSvgs["start-vs-finish"] = startVsFinishSvg;
 	} catch (error) {
@@ -649,6 +689,11 @@ async function init() {
 
 	// Bucket size filter change
 	bucketSizeSelect.addEventListener("change", () => {
+		regenerateVisualizations();
+	});
+
+	// Runner selection change
+	runnerSelect.addEventListener("change", () => {
 		regenerateVisualizations();
 	});
 

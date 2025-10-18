@@ -16,9 +16,10 @@ const SVG_HEIGHT = 600;
 /**
  * Generate net times scatter plot SVG
  * @param {Array} records - Race results data
+ * @param {Object|null} selectedRunner - The runner to highlight
  * @returns {string} SVG markup
  */
-export function generateNettoTimesSvg(records) {
+export function generateNettoTimesSvg(records, selectedRunner = null) {
 	const PADDING_LEFT = 70;
 	const PADDING_RIGHT = 30;
 	const PADDING_TOP = 40;
@@ -40,6 +41,7 @@ export function generateNettoTimesSvg(records) {
 						seconds,
 						label:
 							`${index + 1}. ${entry.nazwisko || ""} ${entry.imie || ""} - ${entry.czasnetto}`.trim(),
+						entry,
 					}
 				: null;
 		})
@@ -70,13 +72,104 @@ export function generateNettoTimesSvg(records) {
 		PADDING_TOP,
 	);
 
-	const plotted = points
-		.map((point, index) => {
-			const cx = scaleX(index);
-			const cy = scaleY(point.seconds);
-			return `<circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="2" fill="#1f77b4"><title>${point.label}</title></circle>`;
-		})
-		.join("\n");
+	// Find selected runner in the points
+	let selectedPointIndex = null;
+	if (selectedRunner) {
+		selectedPointIndex = points.findIndex((p) => p.entry === selectedRunner);
+	}
+
+	// Plot points
+	const plottedCircles = [];
+	for (let index = 0; index < points.length; index++) {
+		const point = points[index];
+		const cx = scaleX(index);
+		const cy = scaleY(point.seconds);
+		const isSelected = selectedPointIndex !== null && index === selectedPointIndex;
+		
+		if (isSelected) {
+			// Skip selected point, we'll draw it last
+			continue;
+		}
+		
+		plottedCircles.push(
+			`<circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="2" fill="#1f77b4"><title>${point.label}</title></circle>`
+		);
+	}
+	
+	// Draw selected runner last (on top) with different styling
+	let highlightElements = "";
+	if (selectedPointIndex !== null) {
+		const point = points[selectedPointIndex];
+		const cx = scaleX(selectedPointIndex);
+		const cy = scaleY(point.seconds);
+		const runnerName = `${selectedRunner.nazwisko || ""} ${selectedRunner.imie || ""}`.trim();
+		
+		// Adaptive positioning: arrow points diagonally from top-right to bottom-left
+		const spaceAbove = cy - PADDING_TOP;
+		const spaceRight = (SVG_WIDTH - PADDING_RIGHT) - cx;
+		const spaceLeft = cx - PADDING_LEFT;
+		
+		let arrowStartX, arrowStartY, arrowEndX, arrowEndY, textX, textY, textAnchor;
+		
+		if (spaceAbove < 60 || spaceRight < 60) {
+			// Not enough space in top-right, try top-left
+			if (spaceLeft > 60 && spaceAbove > 40) {
+				// Place arrow from top-left
+				arrowStartX = cx - 60;
+				arrowStartY = cy - 40;
+				arrowEndX = cx - 8;
+				arrowEndY = cy - 8;
+				textX = arrowStartX - 5;
+				textY = arrowStartY;
+				textAnchor = "end";
+			} else {
+				// Fallback: place to the side with most space
+				if (spaceRight > spaceLeft) {
+					arrowStartX = cx + 60;
+					arrowStartY = cy - 20;
+					arrowEndX = cx + 8;
+					arrowEndY = cy - 8;
+					textX = arrowStartX + 5;
+					textY = arrowStartY;
+					textAnchor = "start";
+				} else {
+					arrowStartX = cx - 60;
+					arrowStartY = cy - 20;
+					arrowEndX = cx - 8;
+					arrowEndY = cy - 8;
+					textX = arrowStartX - 5;
+					textY = arrowStartY;
+					textAnchor = "end";
+				}
+			}
+		} else {
+			// Enough space in top-right, place arrow diagonally
+			arrowStartX = cx + 60;
+			arrowStartY = cy - 40;
+			arrowEndX = cx + 8;
+			arrowEndY = cy - 8;
+			textX = arrowStartX + 5;
+			textY = arrowStartY;
+			textAnchor = "start";
+		}
+		
+		highlightElements = `
+  <!-- Highlighted runner arrow -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#ff4444" />
+    </marker>
+  </defs>
+  <line x1="${arrowStartX}" y1="${arrowStartY}" x2="${arrowEndX}" y2="${arrowEndY}" 
+        stroke="#ff4444" stroke-width="2" marker-end="url(#arrowhead)" />
+  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="12" font-weight="bold" fill="#ff4444">${runnerName}</text>
+  <!-- Highlighted runner dot -->
+  <circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="5" fill="#ff4444" opacity="1.0" stroke="#ffffff" stroke-width="2">
+    <title>${point.label}</title>
+  </circle>`;
+	}
+
+	const plotted = plottedCircles.join("\n") + highlightElements;
 
 	// Generate Y-axis ticks (time labels) at 10-minute intervals
 	const yTickElements = [];

@@ -18,9 +18,10 @@ const SVG_HEIGHT = 600;
  * Generate histogram of net finish times SVG
  * @param {Array} records - Race results data
  * @param {number} bucketSizeSeconds - Bucket size in seconds (default: 60)
+ * @param {Object|null} selectedRunner - The runner to highlight
  * @returns {string} SVG markup
  */
-export function generateHistogramSvg(records, bucketSizeSeconds = 60) {
+export function generateHistogramSvg(records, bucketSizeSeconds = 60, selectedRunner = null) {
 	const PADDING_LEFT = 70;
 	const PADDING_RIGHT = 30;
 	const PADDING_TOP = 40;
@@ -34,15 +35,18 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60) {
 		throw new Error("No completed runs in the data.");
 	}
 
-	const timesInSeconds = finishers
-		.map((entry) => parseNetTime(entry.czasnetto))
-		.filter((seconds) => seconds !== null);
+	const timesWithEntries = finishers
+		.map((entry) => {
+			const seconds = parseNetTime(entry.czasnetto);
+			return seconds ? { seconds, entry } : null;
+		})
+		.filter(Boolean);
 
-	if (!timesInSeconds.length) {
+	if (!timesWithEntries.length) {
 		throw new Error("Failed to parse net times.");
 	}
 
-	const timesInMinutes = timesInSeconds.map((value) => value / 60);
+	const timesInMinutes = timesWithEntries.map((item) => item.seconds / 60);
 	const minMinute = Math.floor(Math.min(...timesInMinutes));
 	const maxMinute = Math.ceil(Math.max(...timesInMinutes));
 	const binSizeMinutes = bucketSizeSeconds / 60;
@@ -53,15 +57,17 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60) {
 	const bins = [];
 
 	for (let i = 0; i < binCount; i += 1) {
-		bins.push({ startMinute: minMinute + i * binSizeMinutes, count: 0 });
+		bins.push({ startMinute: minMinute + i * binSizeMinutes, count: 0, entries: [] });
 	}
 
-	timesInMinutes.forEach((minuteValue) => {
+	timesWithEntries.forEach((item) => {
+		const minuteValue = item.seconds / 60;
 		const index = Math.min(
 			bins.length - 1,
 			Math.floor((minuteValue - minMinute) / binSizeMinutes),
 		);
 		bins[index].count += 1;
+		bins[index].entries.push(item.entry);
 	});
 
 	const maxCount = Math.max(...bins.map((bin) => bin.count));
@@ -125,6 +131,98 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60) {
 		? `${bucketSizeSeconds / 60}-minute buckets`
 		: `${bucketSizeSeconds}-second buckets`;
 
+	// Add highlight for selected runner
+	let highlightElements = "";
+	if (selectedRunner) {
+		// Find which bin contains the selected runner
+		const selectedRunnerTime = parseNetTime(selectedRunner.czasnetto);
+		if (selectedRunnerTime) {
+			const selectedMinute = selectedRunnerTime / 60;
+			const binIndex = Math.min(
+				bins.length - 1,
+				Math.floor((selectedMinute - minMinute) / binSizeMinutes),
+			);
+			const bin = bins[binIndex];
+			
+			// Check if the bin contains the selected runner
+			if (bin.entries.includes(selectedRunner)) {
+				const x = scaleX(bin.startMinute);
+				const nextMinute = bin.startMinute + binSizeMinutes;
+				const x2 = scaleX(nextMinute);
+				const width = Math.max(1, x2 - x - 1);
+				const centerX = x + width / 2;
+				
+				// Position marker at top of the bar
+				const y = scaleY(bin.count);
+				const runnerName = `${selectedRunner.nazwisko || ""} ${selectedRunner.imie || ""}`.trim();
+				
+				// Adaptive positioning: arrow points diagonally from top-right to bottom-left
+				const spaceAbove = y - PADDING_TOP;
+				const spaceRight = (SVG_WIDTH - PADDING_RIGHT) - centerX;
+				const spaceLeft = centerX - PADDING_LEFT;
+				
+				let arrowStartX, arrowStartY, arrowEndX, arrowEndY, textX, textY, textAnchor;
+				
+				if (spaceAbove < 60 || spaceRight < 60) {
+					// Not enough space in top-right, try top-left
+					if (spaceLeft > 60 && spaceAbove > 40) {
+						// Place arrow from top-left
+						arrowStartX = centerX - 60;
+						arrowStartY = y - 40;
+						arrowEndX = centerX - 8;
+						arrowEndY = y - 8;
+						textX = arrowStartX - 5;
+						textY = arrowStartY;
+						textAnchor = "end";
+					} else {
+						// Fallback: place to the side with most space
+						if (spaceRight > spaceLeft) {
+							arrowStartX = centerX + 60;
+							arrowStartY = y - 20;
+							arrowEndX = centerX + 8;
+							arrowEndY = y - 8;
+							textX = arrowStartX + 5;
+							textY = arrowStartY;
+							textAnchor = "start";
+						} else {
+							arrowStartX = centerX - 60;
+							arrowStartY = y - 20;
+							arrowEndX = centerX - 8;
+							arrowEndY = y - 8;
+							textX = arrowStartX - 5;
+							textY = arrowStartY;
+							textAnchor = "end";
+						}
+					}
+				} else {
+					// Enough space in top-right, place arrow diagonally
+					arrowStartX = centerX + 60;
+					arrowStartY = y - 40;
+					arrowEndX = centerX + 8;
+					arrowEndY = y - 8;
+					textX = arrowStartX + 5;
+					textY = arrowStartY;
+					textAnchor = "start";
+				}
+				
+				highlightElements = `
+  <!-- Highlighted runner arrow -->
+  <defs>
+    <marker id="arrowhead-hist" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#ff4444" />
+    </marker>
+  </defs>
+  <line x1="${arrowStartX}" y1="${arrowStartY}" x2="${arrowEndX}" y2="${arrowEndY}" 
+        stroke="#ff4444" stroke-width="2" marker-end="url(#arrowhead-hist)" />
+  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="12" font-weight="bold" fill="#ff4444">${runnerName}</text>
+  <!-- Highlighted runner dot -->
+  <circle cx="${centerX.toFixed(2)}" cy="${y.toFixed(2)}" r="6" fill="#ff4444" opacity="1.0" stroke="#ffffff" stroke-width="2">
+    <title>${runnerName} - ${selectedRunner.czasnetto}</title>
+  </circle>`;
+			}
+		}
+	}
+
 	return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${SVG_WIDTH}" height="${SVG_HEIGHT}" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <title>Histogram of net finish times</title>
@@ -136,6 +234,7 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60) {
   ${tickElements.join("\n  ")}
   ${yTickElements.join("\n  ")}
   ${barElements}
+  ${highlightElements}
   <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Net finish time (${bucketLabel}, labels every 10 min)</text>
   <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">Number of finishers</text>
   ${generateAttribution(SVG_WIDTH, SVG_HEIGHT)}

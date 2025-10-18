@@ -20,9 +20,10 @@ const SVG_HEIGHT = 600;
  * Generate stacked histogram of start buckets SVG
  * @param {Array} records - Race results data
  * @param {number} bucketSizeSeconds - Bucket size in seconds (default: 60)
+ * @param {Object|null} selectedRunner - The runner to highlight
  * @returns {string} SVG markup
  */
-export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
+export function generateStartBucketsSvg(records, bucketSizeSeconds = 60, selectedRunner = null) {
 	const PADDING_LEFT = 70;
 	const PADDING_RIGHT = 30;
 	const PADDING_TOP = 40;
@@ -69,6 +70,7 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
 				finishMinute: netSeconds / 60,
 				startBucketKey: startBucketIndex,
 				startSecond,
+				entry,
 			};
 		})
 		.filter(Boolean);
@@ -140,6 +142,12 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
 		SVG_HEIGHT - PADDING_BOTTOM,
 		PADDING_TOP,
 	);
+
+	// Find selected runner
+	let selectedRunnerData = null;
+	if (selectedRunner) {
+		selectedRunnerData = runners.find((r) => r.entry === selectedRunner);
+	}
 
 	const columns = enrichedBins
 		.map((bin) => {
@@ -231,6 +239,95 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
 		? `${bucketSizeSeconds / 60}-minute buckets`
 		: `${bucketSizeSeconds}-second buckets`;
 
+	// Add highlight for selected runner
+	let highlightElements = "";
+	if (selectedRunnerData) {
+		const binIndex = Math.min(
+			finishBins.length - 1,
+			Math.floor((selectedRunnerData.finishMinute - minFinishMinute) / binSizeMinutes),
+		);
+		const bin = enrichedBins[binIndex];
+		
+		// Find the runner's vertical position in the stack
+		let cumulativeY = 0;
+		for (const segment of bin.segments) {
+			if (segment.startBucketKey === selectedRunnerData.startBucketKey) {
+				// Runner is in this segment, place marker in the middle
+				cumulativeY += segment.count / 2;
+				break;
+			}
+			cumulativeY += segment.count;
+		}
+		
+		const x = scaleX(bin.startMinute + binSizeMinutes / 2);
+		const y = scaleY(cumulativeY);
+		const runnerName = `${selectedRunner.nazwisko || ""} ${selectedRunner.imie || ""}`.trim();
+		
+		// Adaptive positioning: arrow points diagonally from top-right to bottom-left
+		const spaceAbove = y - PADDING_TOP;
+		const spaceRight = (SVG_WIDTH - PADDING_RIGHT) - x;
+		const spaceLeft = x - PADDING_LEFT;
+		
+		let arrowStartX, arrowStartY, arrowEndX, arrowEndY, textX, textY, textAnchor;
+		
+		if (spaceAbove < 60 || spaceRight < 60) {
+			// Not enough space in top-right, try top-left
+			if (spaceLeft > 60 && spaceAbove > 40) {
+				// Place arrow from top-left
+				arrowStartX = x - 60;
+				arrowStartY = y - 40;
+				arrowEndX = x - 8;
+				arrowEndY = y - 8;
+				textX = arrowStartX - 5;
+				textY = arrowStartY;
+				textAnchor = "end";
+			} else {
+				// Fallback: place to the side with most space
+				if (spaceRight > spaceLeft) {
+					arrowStartX = x + 60;
+					arrowStartY = y - 20;
+					arrowEndX = x + 8;
+					arrowEndY = y - 8;
+					textX = arrowStartX + 5;
+					textY = arrowStartY;
+					textAnchor = "start";
+				} else {
+					arrowStartX = x - 60;
+					arrowStartY = y - 20;
+					arrowEndX = x - 8;
+					arrowEndY = y - 8;
+					textX = arrowStartX - 5;
+					textY = arrowStartY;
+					textAnchor = "end";
+				}
+			}
+		} else {
+			// Enough space in top-right, place arrow diagonally
+			arrowStartX = x + 60;
+			arrowStartY = y - 40;
+			arrowEndX = x + 8;
+			arrowEndY = y - 8;
+			textX = arrowStartX + 5;
+			textY = arrowStartY;
+			textAnchor = "start";
+		}
+		
+		highlightElements = `
+  <!-- Highlighted runner arrow -->
+  <defs>
+    <marker id="arrowhead-bucket" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#ff4444" />
+    </marker>
+  </defs>
+  <line x1="${arrowStartX}" y1="${arrowStartY}" x2="${arrowEndX}" y2="${arrowEndY}" 
+        stroke="#ff4444" stroke-width="2" marker-end="url(#arrowhead-bucket)" />
+  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="12" font-weight="bold" fill="#ff4444">${runnerName}</text>
+  <!-- Highlighted runner dot -->
+  <circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="6" fill="#ff4444" opacity="1.0" stroke="#ffffff" stroke-width="2">
+    <title>${runnerName} - Finish: ${minutesToLabel(selectedRunnerData.finishMinute)}</title>
+  </circle>`;
+	}
+
 	return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${SVG_WIDTH}" height="${SVG_HEIGHT}" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <title>Finish time vs start time</title>
@@ -243,6 +340,7 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60) {
   ${tickElements.join("\n  ")}
   ${yTickElements.join("\n  ")}
   ${columns}
+  ${highlightElements}
   <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Net finish time (${bucketLabel}, labels every 10 min)</text>
   <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">Number of finishers</text>
   <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="12" fill="url(#startGradient)" />
