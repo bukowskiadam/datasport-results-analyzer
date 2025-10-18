@@ -80,20 +80,30 @@ let currentResultId = null;
 const MEMORY_KEY = 'datasport-analyzer-session';
 
 /**
- * Save current session state to localStorage
+ * Save current session state to localStorage and result-specific state to IndexedDB
  */
 function saveSessionState() {
 	if (!currentResultId) return;
 	
 	try {
-		const state = {
-			resultId: currentResultId,
+		const filterState = {
 			distance: distanceSelect.value,
 			bucketSize: bucketSizeSelect.value,
 			runner: runnerSelect.value,
+		};
+		
+		// Save to localStorage for page refresh
+		const sessionState = {
+			resultId: currentResultId,
+			...filterState,
 			timestamp: Date.now(),
 		};
-		localStorage.setItem(MEMORY_KEY, JSON.stringify(state));
+		localStorage.setItem(MEMORY_KEY, JSON.stringify(sessionState));
+		
+		// Save filter state to the result in IndexedDB
+		updateResult(currentResultId, { filterState }).catch(error => {
+			console.error('Failed to save filter state to result:', error);
+		});
 	} catch (error) {
 		console.error('Failed to save session state:', error);
 	}
@@ -575,8 +585,11 @@ async function handleStoredResultClick(id, savedState = null) {
 		const finishers = filterFinishers(result.data);
 		const dnfCount = result.data.length - finishers.length;
 
-		// Generate visualizations with saved state if provided
-		generateVisualizations(finishers, savedState);
+		// Prioritize result's saved filter state, then savedState parameter (from page refresh)
+		const stateToRestore = result.filterState || savedState;
+		
+		// Generate visualizations with saved state if available
+		generateVisualizations(finishers, stateToRestore);
 
 		// Show info in distance filter section
 		const dataInfo = document.getElementById("data-info");

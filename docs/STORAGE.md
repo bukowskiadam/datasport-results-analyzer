@@ -47,7 +47,12 @@ Each stored result contains:
   sourceUrl: "https://...",       // Optional datasport.pl URL
   uploadDate: "2023-10-15T14:30:00.000Z", // ISO timestamp
   size: 1245678,                  // File size in bytes
-  recordCount: 2543               // Number of runners in data
+  recordCount: 2543,              // Number of runners in data
+  filterState: {                  // Saved filter preferences (optional)
+    distance: "Marathon (42.19 km)",
+    bucketSize: "300",
+    runner: "42"
+  }
 }
 ```
 
@@ -88,6 +93,12 @@ Each stored result contains:
 - Includes DNF/DNS (full count)
 - Displayed in result cards
 
+**filterState** (object, nullable)
+- Saved filter preferences for this result
+- Automatically updated when filters change
+- Structure: `{ distance, bucketSize, runner }`
+- Restored when result is loaded again
+
 ## Storage Operations
 
 ### Saving Results
@@ -110,10 +121,9 @@ const resultId = await saveResult(
 - ✅ Upload timestamp
 - ✅ File size
 - ✅ Record count
+- ✅ Filter state (initially null, updated when filters change)
 
 **What Doesn't Get Saved:**
-- ❌ Current filter selections (distance, bucket size)
-  - These are saved separately in session state
 - ❌ Generated SVGs (too large)
   - Download SVGs separately if needed
 - ❌ Visualization state (zoom, pan)
@@ -148,6 +158,12 @@ const result = await getResult(id);
 - Can add URL if none exists
 - Can modify existing URL
 - Can clear by entering empty string
+
+**Filter State Auto-Save:**
+- Filter preferences automatically saved when changed
+- Includes distance, bucket size, and selected runner
+- Restored when you load that result again
+- Each result maintains its own filter preferences
 
 ### Deleting Results
 

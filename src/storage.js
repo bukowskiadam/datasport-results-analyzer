@@ -63,6 +63,7 @@ export async function saveResult(name, data, sourceUrl = null, fileSize = null) 
 			uploadDate: new Date().toISOString(),
 			size: fileSize || new Blob([JSON.stringify(data)]).size,
 			recordCount: data.length,
+			filterState: null, // Will store distance, bucketSize, runner filters
 		};
 
 		const request = store.add(record);
@@ -166,6 +167,9 @@ export async function updateResult(id, updates) {
 			}
 			if (updates.sourceUrl !== undefined) {
 				record.sourceUrl = updates.sourceUrl;
+			}
+			if (updates.filterState !== undefined) {
+				record.filterState = updates.filterState;
 			}
 			
 			const putRequest = store.put(record);
