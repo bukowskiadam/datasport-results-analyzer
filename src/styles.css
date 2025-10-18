@@ -525,7 +525,6 @@ footer a:hover {
   border-radius: 6px;
   background-color: white;
   cursor: pointer;
-  min-width: 200px;
   transition: border-color 0.3s;
 }
 
@@ -562,10 +561,15 @@ footer a:hover {
   display: flex;
   gap: 8px;
   align-items: center;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .runner-selector {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0; /* Important for flex item truncation */
+  max-width: 100%;
   padding: 8px 16px;
   font-size: 1rem;
   border: 2px solid var(--border-color);
@@ -573,6 +577,21 @@ footer a:hover {
   background-color: white;
   cursor: pointer;
   transition: border-color 0.3s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.runner-selector option {
+  white-space: normal;
 }
 
 .runner-selector:focus {
@@ -872,5 +891,25 @@ footer a:hover {
   .section-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+  
+  /* Fix runner selector on mobile */
+  .runner-selector-row {
+    gap: 6px;
+  }
+  
+  .runner-selector {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+  
+  .remove-runner-btn {
+    padding: 6px;
+    flex-shrink: 0;
+  }
+  
+  .remove-runner-btn svg {
+    width: 14px;
+    height: 14px;
   }
 }
