@@ -2,13 +2,14 @@
 
 A web-based application for analyzing and visualizing race results from datasport.pl.
 
-**🚀 [Live Demo](https://bukowskiadam.github.io/datasport-results-analyzer/)**
+**🚀 [Open the app](https://bukowskiadam.github.io/datasport-results-analyzer/)**
 
 Generate interactive SVG visualizations from race results data:
 
 1. **Netto times scatter** - Each dot represents a finisher's net time
 2. **Netto times histogram** - Distribution of finishers in 1-minute buckets
 3. **Stacked finish vs start time histogram** - Finish times segmented by start minute
+4. **Start vs finish time** - Compare start positions with finish time to spot overtaking patterns
 
 ## Features
 
@@ -132,17 +133,22 @@ Below are SVGs generated from the [11. PKO Cracovia Półmaraton Królewski](htt
 
 ### Net finish times scatter
 <p>
-	<img src="netto-times.svg" alt="Scatter plot of net finish times" width="800" />
+	<img src="sample-graphs/netto-times.svg" alt="Scatter plot of net finish times" width="800" />
 </p>
 
 ### Net finish time histogram
 <p>
-	<img src="histogram-netto-times.svg" alt="Histogram of net finish times" width="800" />
+	<img src="sample-graphs/histogram-netto-times.svg" alt="Histogram of net finish times" width="800" />
 </p>
 
 ### Finish time vs start time (stacked)
 <p>
-	<img src="start-buckets-stacked.svg" alt="Stacked histogram: finish buckets segmented by start minute" width="800" />
+	<img src="sample-graphs/start-buckets-stacked.svg" alt="Stacked histogram: finish buckets segmented by start minute" width="800" />
+</p>
+
+### Start vs finish time
+<p>
+	<img src="sample-graphs/start-vs-finish.svg" alt="Start position vs finish time scatter plot" width="800" />
 </p>
 
 ## License
