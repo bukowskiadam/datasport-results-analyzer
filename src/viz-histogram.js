@@ -170,9 +170,53 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60, selectedRu
 				
 				let arrowStartX, arrowStartY, arrowEndX, arrowEndY, textX, textY, textAnchor;
 				
-				if (spaceAbove < (60 + verticalOffset) || spaceRight < 60) {
-					// Not enough space in top-right, try top-left
-					if (spaceLeft > 60 && spaceAbove > (40 + verticalOffset)) {
+				// Minimum space needed above for diagonal arrow (accounts for text height and offset)
+				const minSpaceAbove = 50 + verticalOffset;
+				
+				// If bar is very close to top (less than minSpaceAbove), place arrow to the side
+				if (spaceAbove < minSpaceAbove) {
+					// Place arrow to the side with most space
+					if (spaceRight > spaceLeft && spaceRight > 80) {
+						// Place arrow to the right
+						arrowStartX = centerX + 80;
+						arrowStartY = y + 5 + verticalOffset;
+						arrowEndX = centerX + 8;
+						arrowEndY = y;
+						textX = arrowStartX + 5;
+						textY = arrowStartY + 4;
+						textAnchor = "start";
+					} else if (spaceLeft > 80) {
+						// Place arrow to the left
+						arrowStartX = centerX - 80;
+						arrowStartY = y + 5 + verticalOffset;
+						arrowEndX = centerX - 8;
+						arrowEndY = y;
+						textX = arrowStartX - 5;
+						textY = arrowStartY + 4;
+						textAnchor = "end";
+					} else {
+						// Very little space on sides, use shorter arrow to preferred side
+						if (spaceRight > spaceLeft) {
+							arrowStartX = centerX + Math.min(60, spaceRight - 10);
+							arrowStartY = y + 5 + verticalOffset;
+							arrowEndX = centerX + 8;
+							arrowEndY = y;
+							textX = arrowStartX + 5;
+							textY = arrowStartY + 4;
+							textAnchor = "start";
+						} else {
+							arrowStartX = centerX - Math.min(60, spaceLeft - 10);
+							arrowStartY = y + 5 + verticalOffset;
+							arrowEndX = centerX - 8;
+							arrowEndY = y;
+							textX = arrowStartX - 5;
+							textY = arrowStartY + 4;
+							textAnchor = "end";
+						}
+					}
+				} else if (spaceRight < 60) {
+					// Not enough space on right, try top-left diagonal
+					if (spaceLeft > 60) {
 						// Place arrow from top-left
 						arrowStartX = centerX - 60;
 						arrowStartY = y - (40 + verticalOffset);
@@ -182,27 +226,17 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60, selectedRu
 						textY = arrowStartY;
 						textAnchor = "end";
 					} else {
-						// Fallback: place to the side with most space
-						if (spaceRight > spaceLeft) {
-							arrowStartX = centerX + 60;
-							arrowStartY = y - (20 + verticalOffset);
-							arrowEndX = centerX + 8;
-							arrowEndY = y - 8;
-							textX = arrowStartX + 5;
-							textY = arrowStartY;
-							textAnchor = "start";
-						} else {
-							arrowStartX = centerX - 60;
-							arrowStartY = y - (20 + verticalOffset);
-							arrowEndX = centerX - 8;
-							arrowEndY = y - 8;
-							textX = arrowStartX - 5;
-							textY = arrowStartY;
-							textAnchor = "end";
-						}
+						// Place to the left side if possible
+						arrowStartX = centerX - Math.min(60, spaceLeft - 10);
+						arrowStartY = y - (20 + verticalOffset);
+						arrowEndX = centerX - 8;
+						arrowEndY = y - 8;
+						textX = arrowStartX - 5;
+						textY = arrowStartY;
+						textAnchor = "end";
 					}
 				} else {
-					// Enough space in top-right, place arrow diagonally
+					// Enough space above and to the right, place arrow diagonally top-right
 					arrowStartX = centerX + 60;
 					arrowStartY = y - (40 + verticalOffset);
 					arrowEndX = centerX + 8;
@@ -222,7 +256,7 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60, selectedRu
   <!-- Highlighted runner ${i + 1} arrow -->
   <line x1="${arrowStartX}" y1="${arrowStartY}" x2="${arrowEndX}" y2="${arrowEndY}" 
         stroke="${color}" stroke-width="2" marker-end="url(#${markerId})" />
-  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="12" font-weight="bold" fill="${color}">${runnerName}</text>
+  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="16" font-weight="bold" fill="${color}">${runnerName}</text>
   <!-- Highlighted runner ${i + 1} dot -->
   <circle cx="${centerX.toFixed(2)}" cy="${y.toFixed(2)}" r="6" fill="${color}" opacity="1.0" stroke="#ffffff" stroke-width="2">
     <title>${runnerName} - ${selectedRunner.czasnetto}</title>

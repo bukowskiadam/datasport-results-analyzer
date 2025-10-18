@@ -177,7 +177,7 @@ export function generateNettoTimesSvg(records, selectedRunners = []) {
   <!-- Highlighted runner ${i + 1} arrow -->
   <line x1="${arrowStartX}" y1="${arrowStartY}" x2="${arrowEndX}" y2="${arrowEndY}" 
         stroke="${color}" stroke-width="2" marker-end="url(#${markerId})" />
-  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="12" font-weight="bold" fill="${color}">${runnerName}</text>
+  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="16" font-weight="bold" fill="${color}">${runnerName}</text>
   <!-- Highlighted runner ${i + 1} dot -->
   <circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="5" fill="${color}" opacity="1.0" stroke="#ffffff" stroke-width="2">
     <title>${point.label}</title>

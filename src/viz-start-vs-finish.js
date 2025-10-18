@@ -147,9 +147,53 @@ export function generateStartVsFinishSvg(records, selectedRunners = []) {
 		
 		let arrowStartX, arrowStartY, arrowEndX, arrowEndY, textX, textY, textAnchor;
 		
-		if (spaceAbove < (60 + verticalOffset) || spaceRight < 60) {
-			// Not enough space in top-right, try top-left
-			if (spaceLeft > 60 && spaceAbove > (40 + verticalOffset)) {
+		// Minimum space needed above for diagonal arrow (accounts for text height and offset)
+		const minSpaceAbove = 50 + verticalOffset;
+		
+		// If point is very close to top (less than minSpaceAbove), place arrow to the side
+		if (spaceAbove < minSpaceAbove) {
+			// Place arrow to the side with most space
+			if (spaceRight > spaceLeft && spaceRight > 80) {
+				// Place arrow to the right
+				arrowStartX = cx + 80;
+				arrowStartY = cy + 5 + verticalOffset;
+				arrowEndX = cx + 8;
+				arrowEndY = cy;
+				textX = arrowStartX + 5;
+				textY = arrowStartY + 4;
+				textAnchor = "start";
+			} else if (spaceLeft > 80) {
+				// Place arrow to the left
+				arrowStartX = cx - 80;
+				arrowStartY = cy + 5 + verticalOffset;
+				arrowEndX = cx - 8;
+				arrowEndY = cy;
+				textX = arrowStartX - 5;
+				textY = arrowStartY + 4;
+				textAnchor = "end";
+			} else {
+				// Very little space on sides, use shorter arrow to preferred side
+				if (spaceRight > spaceLeft) {
+					arrowStartX = cx + Math.min(60, spaceRight - 10);
+					arrowStartY = cy + 5 + verticalOffset;
+					arrowEndX = cx + 8;
+					arrowEndY = cy;
+					textX = arrowStartX + 5;
+					textY = arrowStartY + 4;
+					textAnchor = "start";
+				} else {
+					arrowStartX = cx - Math.min(60, spaceLeft - 10);
+					arrowStartY = cy + 5 + verticalOffset;
+					arrowEndX = cx - 8;
+					arrowEndY = cy;
+					textX = arrowStartX - 5;
+					textY = arrowStartY + 4;
+					textAnchor = "end";
+				}
+			}
+		} else if (spaceRight < 60) {
+			// Not enough space on right, try top-left diagonal
+			if (spaceLeft > 60) {
 				// Place arrow from top-left
 				arrowStartX = cx - 60;
 				arrowStartY = cy - (40 + verticalOffset);
@@ -159,27 +203,17 @@ export function generateStartVsFinishSvg(records, selectedRunners = []) {
 				textY = arrowStartY;
 				textAnchor = "end";
 			} else {
-				// Fallback: place to the side with most space
-				if (spaceRight > spaceLeft) {
-					arrowStartX = cx + 60;
-					arrowStartY = cy - (20 + verticalOffset);
-					arrowEndX = cx + 8;
-					arrowEndY = cy - 8;
-					textX = arrowStartX + 5;
-					textY = arrowStartY;
-					textAnchor = "start";
-				} else {
-					arrowStartX = cx - 60;
-					arrowStartY = cy - (20 + verticalOffset);
-					arrowEndX = cx - 8;
-					arrowEndY = cy - 8;
-					textX = arrowStartX - 5;
-					textY = arrowStartY;
-					textAnchor = "end";
-				}
+				// Place to the left side if possible
+				arrowStartX = cx - Math.min(60, spaceLeft - 10);
+				arrowStartY = cy - (20 + verticalOffset);
+				arrowEndX = cx - 8;
+				arrowEndY = cy - 8;
+				textX = arrowStartX - 5;
+				textY = arrowStartY;
+				textAnchor = "end";
 			}
 		} else {
-			// Enough space in top-right, place arrow diagonally
+			// Enough space above and to the right, place arrow diagonally top-right
 			arrowStartX = cx + 60;
 			arrowStartY = cy - (40 + verticalOffset);
 			arrowEndX = cx + 8;
@@ -199,7 +233,7 @@ export function generateStartVsFinishSvg(records, selectedRunners = []) {
   <!-- Highlighted runner ${i + 1} arrow -->
   <line x1="${arrowStartX}" y1="${arrowStartY}" x2="${arrowEndX}" y2="${arrowEndY}" 
         stroke="${color}" stroke-width="2" marker-end="url(#${markerId})" />
-  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="12" font-weight="bold" fill="${color}">${selectedPoint.name}</text>
+  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="16" font-weight="bold" fill="${color}">${selectedPoint.name}</text>
   <!-- Highlighted runner ${i + 1} dot -->
   <circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="6" fill="${color}" opacity="1.0" stroke="#ffffff" stroke-width="2">
     <title>${selectedPoint.label}</title>
