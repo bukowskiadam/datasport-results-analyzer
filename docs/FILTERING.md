@@ -118,19 +118,21 @@ Showing 2,156 results
 **Purpose**: Highlight specific runners across all visualizations for easy comparison
 
 #### Selection Interface
-- **Dynamic single-select dropdowns**: Each dropdown shows alphabetically sorted list of all runners
+- **Dynamic multi-select dropdowns**: Each dropdown shows alphabetically sorted list of all runners
 - **Format**: "Last Name First Name (Age Category) #Bib"
 - **Example**: "Kowalski Jan (M40) #42"
 - **Add runners**: Click the "+ Add Runner" button to add more selection dropdowns (up to 10)
 - **Remove runners**: Click the "×" button next to any dropdown to remove it
 - **Multiple runners**: Each runner gets a different color for easy identification
+- **Default state**: One empty dropdown appears when data is loaded
 
 #### How to Use
-1. **Select first runner**: Choose from the initial dropdown
-2. **Add more runners**: Click the "+ Add Runner" button
+1. **Select first runner**: Choose from the initial dropdown that appears when data loads
+2. **Add more runners**: Click the "+ Add Runner" button to add another dropdown
 3. **Select additional runners**: Use the new dropdowns that appear
-4. **Remove a runner**: Click the "×" button next to their dropdown
+4. **Remove a runner**: Click the "×" button next to their dropdown to remove it
 5. **View comparison**: All selected runners appear highlighted across all visualizations
+6. **Limit**: Maximum of 10 runners can be selected (button hides when limit reached)
 
 #### Color Scheme for Multiple Runners
 When multiple runners are selected, they are highlighted with different colors:
@@ -139,7 +141,9 @@ When multiple runners are selected, they are highlighted with different colors:
 - **Runner 3**: Orange (#ff8800)
 - **Runner 4**: Purple (#8844ff)
 - **Runner 5**: Cyan (#00cccc)
-- Colors repeat for additional runners (6th runner gets red again, etc.)
+- **Runner 6+**: Colors repeat (Runner 6 = Red, Runner 7 = Green, etc.)
+
+The color system helps distinguish between runners when comparing multiple athletes across all four visualizations.
 
 #### Effects on Visualizations
 
@@ -221,7 +225,9 @@ Runner 2 ← ● or ● → Runner 2
 - Index-based selection (maintains reference even after filtering)
 - Survives distance filter changes
 - Saved in session state (restored on page reload)
-- Array-based storage (supports unlimited runners, practical limit ~5)
+- Array-based storage in filterState: `runners: ["42", "156", "89"]`
+- Maximum 10 runners enforced by UI (for performance and readability)
+- Each runner selector is independently removable
 
 ---
 

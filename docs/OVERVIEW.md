@@ -273,15 +273,31 @@ Each visualization provides unique insights into race performance:
 
 ### Local-Only Storage
 - All data stays in your browser
-- No server communication
-- No tracking or analytics
+- No server communication (except analytics)
 - No account required
+- Race data never leaves your device
+
+### Analytics
+- **Umami Analytics** - Privacy-focused, GDPR-compliant analytics
+- **What's tracked**: Page views and feature usage (button clicks, filter changes)
+- **What's NOT tracked**: Your race data, personal information, or uploaded files
+- **Disabled on localhost** - No tracking during development
+- **Purpose**: Understand which features are used to improve the app
+- **No cookies** - Umami uses cookieless tracking
+- **Anonymous** - No personal identification
+
+### Events Tracked
+- URL preparation (which race IDs are analyzed)
+- Data loading method (upload vs storage)
+- Filter usage (distance, bucket size, runner selection)
+- Feature interactions (add/remove runner, etc.)
 
 ### Data Clearing
-- Clear browser data removes all
-- Private mode: no persistence
+- Clear browser data removes all stored results
+- Private mode: no persistence for results
 - Manual delete: individual results
 - Clear all: removes everything
+- Analytics data: stored by Umami (not in your browser)
 
 ## Performance
 

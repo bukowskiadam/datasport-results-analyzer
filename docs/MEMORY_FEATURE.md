@@ -10,7 +10,7 @@ When you load a race result and apply filters, the following information is auto
 
 1. **Distance Filter** - Which distance you had selected
 2. **Bucket Size** - The histogram bucket size you chose
-3. **Selected Runner** - Any specific runner you were highlighting
+3. **Selected Runners** - All runners you were highlighting (array of up to 10 runners)
 
 Additionally, for page refresh scenarios:
 4. **Last Selected Result** - The specific race result you were analyzing
@@ -72,7 +72,7 @@ Filter settings are stored in two locations:
   {
     "distance": "Marathon (42.19 km)",
     "bucketSize": "300",
-    "runner": "42"
+    "runners": ["42", "156", "89"]
   }
   ```
 
@@ -84,7 +84,7 @@ Filter settings are stored in two locations:
     "resultId": 123,
     "distance": "10km",
     "bucketSize": "300",
-    "runner": "42",
+    "runners": ["42", "156", "89"],
     "timestamp": 1729267200000
   }
   ```

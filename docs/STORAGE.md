@@ -51,7 +51,7 @@ Each stored result contains:
   filterState: {                  // Saved filter preferences (optional)
     distance: "Marathon (42.19 km)",
     bucketSize: "300",
-    runner: "42"
+    runners: ["42", "156", "89"]   // Array of runner indices
   }
 }
 ```
