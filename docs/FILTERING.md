@@ -119,8 +119,8 @@ Showing 2,156 results
 
 #### Selection Interface
 - **Dynamic single-select dropdowns**: Each dropdown shows alphabetically sorted list of all runners
-- **Format**: "Last Name First Name (#Bib)"
-- **Example**: "Kowalski Jan (#42)"
+- **Format**: "Last Name First Name (Age Category) #Bib"
+- **Example**: "Kowalski Jan (M40) #42"
 - **Add runners**: Click the "+ Add Runner" button to add more selection dropdowns (up to 10)
 - **Remove runners**: Click the "×" button next to any dropdown to remove it
 - **Multiple runners**: Each runner gets a different color for easy identification

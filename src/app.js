@@ -253,16 +253,29 @@ function updateAddButtonVisibility() {
  * @param {Array} [preselectedRunners] - Optional array of runner indices to preselect
  */
 function setupRunnerSelector(data, preselectedRunners = null) {
-	// Create list of runners with their names and bib numbers
+	// Create list of runners with their names, bib numbers, and age categories
 	availableRunners = data
 		.map((entry, index) => {
 			const name = `${entry.nazwisko || ""} ${entry.imie || ""}`.trim();
 			const bib = entry.numer || "";
+			const category = entry.katw || "";
+			
+			// Build display name: Name (Category) #Bib or Name (Category) or Name #Bib or Name
+			let displayName = name;
+			if (category && bib) {
+				displayName = `${name} (${category}) #${bib}`;
+			} else if (category) {
+				displayName = `${name} (${category})`;
+			} else if (bib) {
+				displayName = `${name} #${bib}`;
+			}
+			
 			return {
 				index,
 				name,
 				bib,
-				displayName: bib ? `${name} (#${bib})` : name,
+				category,
+				displayName,
 				entry,
 			};
 		})

@@ -214,7 +214,7 @@ Affects histograms (Net Times and Start Buckets):
 
 ### Runner Selection
 - Dropdown lists all runners alphabetically
-- Format: "Name (Bib #)"
+- Format: "Name (Age Category) #Bib" or variations if data is missing
 - Selecting a runner:
   - Highlights them in all visualizations
   - Shows their exact position/time
