@@ -19,6 +19,7 @@ import {
 	generateHistogramSvg,
 	generateNettoTimesSvg,
 	generateStartBucketsSvg,
+	generateStartVsFinishSvg,
 } from "./visualizations.js";
 
 // DOM elements
@@ -56,12 +57,14 @@ const filtersContent = document.getElementById("filters-content");
 const nettoTimesContainer = document.getElementById("viz-netto-times");
 const histogramContainer = document.getElementById("viz-histogram");
 const startBucketsContainer = document.getElementById("viz-start-buckets");
+const startVsFinishContainer = document.getElementById("viz-start-vs-finish");
 
 // Store generated SVGs for download
 const generatedSvgs = {
 	"netto-times": "",
 	histogram: "",
 	"start-buckets": "",
+	"start-vs-finish": "",
 };
 
 // Store current JSON URL for manual download
@@ -195,6 +198,11 @@ function generateVisualizations(data) {
 		startBucketsContainer.innerHTML = startBucketsSvg;
 		generatedSvgs["start-buckets"] = startBucketsSvg;
 
+		// Generate start vs finish visualization
+		const startVsFinishSvg = generateStartVsFinishSvg(filteredData);
+		startVsFinishContainer.innerHTML = startVsFinishSvg;
+		generatedSvgs["start-vs-finish"] = startVsFinishSvg;
+
 		showResults();
 	} catch (error) {
 		throw new Error(`Failed to generate visualizations: ${error.message}`);
@@ -226,6 +234,10 @@ function regenerateVisualizations() {
 		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize);
 		startBucketsContainer.innerHTML = startBucketsSvg;
 		generatedSvgs["start-buckets"] = startBucketsSvg;
+
+		const startVsFinishSvg = generateStartVsFinishSvg(filteredData);
+		startVsFinishContainer.innerHTML = startVsFinishSvg;
+		generatedSvgs["start-vs-finish"] = startVsFinishSvg;
 	} catch (error) {
 		console.error("Failed to regenerate visualizations:", error);
 		showError(`Failed to regenerate visualizations: ${error.message}`);

@@ -77,15 +77,7 @@ This is a datasport race results analyzer that generates SVG visualizations from
 - Use console logging for debugging
 - Handle errors gracefully with try/catch
 
-### Testing Approach
+## Graph Generation Guidelines
 
-- Test scripts can be run directly with Node.js
-- Use `node scriptName.js` to execute
-- Verify SVG output visually after generation
-
-## Project-Specific Context
-
-- Input: `results.json` containing race results data
-- Output: SVG files for visualizations
-- Scripts: `netto-times.js`, `histogram-netto-times.js`, `start-buckets-stacked.js`
-- All scripts are standalone and generate their own SVG output
+- Generated graphs have to contain watermarks and attributions to my page
+- When creating new graphs use existing graph generation files as reference to pick the style and structure

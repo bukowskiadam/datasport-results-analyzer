@@ -6,3 +6,4 @@
 export { generateHistogramSvg } from "./viz-histogram.js";
 export { generateNettoTimesSvg } from "./viz-netto-times.js";
 export { generateStartBucketsSvg } from "./viz-start-buckets.js";
+export { generateStartVsFinishSvg } from "./viz-start-vs-finish.js";

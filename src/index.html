@@ -193,12 +193,24 @@
           </div>
 
           <div class="visualization">
-            <h3>Start Time vs Finish Time</h3>
+            <h3>Histogram of Net Finish Times segmented by Start Time</h3>
             <p class="description">
               Stacked histogram showing finish times segmented by start time
             </p>
             <div id="viz-start-buckets" class="svg-container"></div>
             <button class="download-btn" data-viz="start-buckets">
+              Download SVG
+            </button>
+          </div>
+
+          <div class="visualization">
+            <h3>Relative Start Time vs Net Finish Time</h3>
+            <p class="description">
+              Each dot represents a runner - showing how relative start time
+              correlates with net finish time
+            </p>
+            <div id="viz-start-vs-finish" class="svg-container"></div>
+            <button class="download-btn" data-viz="start-vs-finish">
               Download SVG
             </button>
           </div>
