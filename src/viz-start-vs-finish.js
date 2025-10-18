@@ -192,7 +192,7 @@ export function generateStartVsFinishSvg(records) {
 	const watermark = generateWatermark(SVG_WIDTH, SVG_HEIGHT);
 	const attribution = generateAttribution(SVG_WIDTH, SVG_HEIGHT);
 
-	return `<svg width="${SVG_WIDTH}" height="${SVG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+	return `<svg width="${SVG_WIDTH}" height="${SVG_HEIGHT}" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <title>Relative Start Time vs Net Finish Time</title>
   <desc>Scatter plot showing correlation between relative start time and net finish time for race participants</desc>
   
