@@ -81,3 +81,71 @@ This is a datasport race results analyzer that generates SVG visualizations from
 
 - Generated graphs have to contain watermarks and attributions to my page
 - When creating new graphs use existing graph generation files as reference to pick the style and structure
+
+## Documentation
+
+### Location
+
+All feature documentation is located in the `/docs` folder:
+
+- **[OVERVIEW.md](../docs/OVERVIEW.md)** - High-level feature summary and index
+- **[DATA_LOADING.md](../docs/DATA_LOADING.md)** - Data loading, upload, CORS, validation
+- **[STORAGE.md](../docs/STORAGE.md)** - IndexedDB storage, result management, quota
+- **[MEMORY_FEATURE.md](../docs/MEMORY_FEATURE.md)** - Session persistence and restoration
+- **[FILTERING.md](../docs/FILTERING.md)** - Distance, bucket size, and runner filters
+- **[VISUALIZATIONS.md](../docs/VISUALIZATIONS.md)** - All visualization types and features
+
+### Documentation Maintenance Rules
+
+**CRITICAL**: Documentation must always stay in sync with implementation.
+
+When making code changes:
+
+1. **Update documentation FIRST** if adding new features
+2. **Update documentation IMMEDIATELY** if modifying existing features
+3. **Update documentation ALWAYS** if changing behavior or UI
+
+#### What to Update
+
+**Adding a new feature:**
+
+- Add section to relevant documentation file
+- Update OVERVIEW.md to reference new feature
+- Add to appropriate workflow examples
+
+**Modifying a feature:**
+
+- Update the relevant documentation section
+- Update screenshots/examples if UI changed
+- Check cross-references in other docs
+
+**Removing a feature:**
+
+- Remove from all documentation files
+- Update OVERVIEW.md
+- Remove from workflow examples
+
+**Changing behavior:**
+
+- Update "How It Works" sections
+- Update troubleshooting if error messages changed
+- Update examples if output changed
+
+#### Documentation Quality Standards
+
+- **Be specific**: Exact button names, field names, file paths
+- **Be complete**: Cover all options, edge cases, error conditions
+- **Be accurate**: Test all examples and code snippets
+- **Be helpful**: Include troubleshooting, best practices, use cases
+- **Be current**: Remove outdated information immediately
+
+#### Before Committing Code
+
+Checklist:
+
+- [ ] Code changes are complete and tested
+- [ ] Documentation updated to match changes
+- [ ] OVERVIEW.md updated if needed
+- [ ] Examples still work as documented
+- [ ] No references to removed features
+- [ ] Cross-references still valid
