@@ -68,6 +68,8 @@ This is a datasport race results analyzer that generates SVG visualizations from
 - Generate SVG markup as strings or DOM elements
 - Keep SVG generation logic modular and reusable
 - Use descriptive variable names for coordinates and dimensions
+- Generated graphs have to contain watermarks and attributions to my page
+- When creating new graphs use existing graph generation files as reference to pick the style and structure
 
 ### Best Practices
 
@@ -76,11 +78,6 @@ This is a datasport race results analyzer that generates SVG visualizations from
 - Add comments for complex logic
 - Use console logging for debugging
 - Handle errors gracefully with try/catch
-
-## Graph Generation Guidelines
-
-- Generated graphs have to contain watermarks and attributions to my page
-- When creating new graphs use existing graph generation files as reference to pick the style and structure
 
 ## Documentation
 
@@ -149,3 +146,42 @@ Checklist:
 - [ ] Examples still work as documented
 - [ ] No references to removed features
 - [ ] Cross-references still valid
+
+## Git Commit Messages
+
+### Semantic Commit Format
+
+Use semantic commit messages following the Conventional Commits specification:
+
+```
+<type>: <brief description>
+```
+
+### Commit Types
+
+- **feat**: New feature for the user
+- **fix**: Bug fix
+- **docs**: Documentation changes
+- **style**: Code style changes (formatting, whitespace)
+- **refactor**: Code refactoring (no functional changes)
+- **perf**: Performance improvements
+- **test**: Adding or updating tests
+- **chore**: Maintenance tasks (dependencies, build, etc.)
+
+### Guidelines
+
+- **Be brief**: Keep the description concise (50 characters or less)
+- **Use imperative mood**: "Add feature" not "Added feature"
+- **No period at the end**: Keep it clean
+- **Lowercase after colon**: Unless proper noun or code reference
+
+### Examples
+
+```
+feat: add runner comparison feature
+fix: correct bucket size calculation
+docs: update FILTERING.md with new examples
+refactor: extract SVG generation logic
+perf: optimize histogram rendering
+chore: update dependencies
+```

@@ -273,3 +273,20 @@ export function generateAttribution(width, height) {
     <text x="${x}" y="${y}" text-anchor="end" font-size="10" fill="#666666">Created with ${url}</text>
   </a>`;
 }
+
+/**
+ * Get color for runner highlighting based on index
+ * @param {number} index - Runner index (0-based)
+ * @returns {string} Hex color code
+ */
+export function getRunnerColor(index) {
+  const colors = [
+    '#ff4444', // Red
+    '#00cc00', // Green
+    '#ff8800', // Orange
+    '#8844ff', // Purple
+    '#00cccc', // Cyan
+  ];
+  return colors[index % colors.length];
+}
+

@@ -6,6 +6,7 @@ import {
 	calculateTimeInterval,
 	generateAttribution,
 	generateWatermark,
+	getRunnerColor,
 	minutesToLabel,
 	parseNetTime,
 	scaleLinear,
@@ -18,10 +19,10 @@ const SVG_HEIGHT = 600;
  * Generate histogram of net finish times SVG
  * @param {Array} records - Race results data
  * @param {number} bucketSizeSeconds - Bucket size in seconds (default: 60)
- * @param {Object|null} selectedRunner - The runner to highlight
+ * @param {Array} selectedRunners - Array of runners to highlight
  * @returns {string} SVG markup
  */
-export function generateHistogramSvg(records, bucketSizeSeconds = 60, selectedRunner = null) {
+export function generateHistogramSvg(records, bucketSizeSeconds = 60, selectedRunners = []) {
 	const PADDING_LEFT = 70;
 	const PADDING_RIGHT = 30;
 	const PADDING_TOP = 40;
@@ -131,9 +132,14 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60, selectedRu
 		? `${bucketSizeSeconds / 60}-minute buckets`
 		: `${bucketSizeSeconds}-second buckets`;
 
-	// Add highlight for selected runner
+	// Add highlight for selected runners
 	let highlightElements = "";
-	if (selectedRunner) {
+	let markerDefs = "";
+	
+	for (let i = 0; i < selectedRunners.length; i++) {
+		const selectedRunner = selectedRunners[i];
+		const color = getRunnerColor(i);
+		
 		// Find which bin contains the selected runner
 		const selectedRunnerTime = parseNetTime(selectedRunner.czasnetto);
 		if (selectedRunnerTime) {
@@ -156,19 +162,20 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60, selectedRu
 				const y = scaleY(bin.count);
 				const runnerName = `${selectedRunner.nazwisko || ""} ${selectedRunner.imie || ""}`.trim();
 				
-				// Adaptive positioning: arrow points diagonally from top-right to bottom-left
+				// Adaptive positioning with vertical offset for multiple runners
+				const verticalOffset = i * 25;
 				const spaceAbove = y - PADDING_TOP;
 				const spaceRight = (SVG_WIDTH - PADDING_RIGHT) - centerX;
 				const spaceLeft = centerX - PADDING_LEFT;
 				
 				let arrowStartX, arrowStartY, arrowEndX, arrowEndY, textX, textY, textAnchor;
 				
-				if (spaceAbove < 60 || spaceRight < 60) {
+				if (spaceAbove < (60 + verticalOffset) || spaceRight < 60) {
 					// Not enough space in top-right, try top-left
-					if (spaceLeft > 60 && spaceAbove > 40) {
+					if (spaceLeft > 60 && spaceAbove > (40 + verticalOffset)) {
 						// Place arrow from top-left
 						arrowStartX = centerX - 60;
-						arrowStartY = y - 40;
+						arrowStartY = y - (40 + verticalOffset);
 						arrowEndX = centerX - 8;
 						arrowEndY = y - 8;
 						textX = arrowStartX - 5;
@@ -178,7 +185,7 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60, selectedRu
 						// Fallback: place to the side with most space
 						if (spaceRight > spaceLeft) {
 							arrowStartX = centerX + 60;
-							arrowStartY = y - 20;
+							arrowStartY = y - (20 + verticalOffset);
 							arrowEndX = centerX + 8;
 							arrowEndY = y - 8;
 							textX = arrowStartX + 5;
@@ -186,7 +193,7 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60, selectedRu
 							textAnchor = "start";
 						} else {
 							arrowStartX = centerX - 60;
-							arrowStartY = y - 20;
+							arrowStartY = y - (20 + verticalOffset);
 							arrowEndX = centerX - 8;
 							arrowEndY = y - 8;
 							textX = arrowStartX - 5;
@@ -197,7 +204,7 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60, selectedRu
 				} else {
 					// Enough space in top-right, place arrow diagonally
 					arrowStartX = centerX + 60;
-					arrowStartY = y - 40;
+					arrowStartY = y - (40 + verticalOffset);
 					arrowEndX = centerX + 8;
 					arrowEndY = y - 8;
 					textX = arrowStartX + 5;
@@ -205,22 +212,30 @@ export function generateHistogramSvg(records, bucketSizeSeconds = 60, selectedRu
 					textAnchor = "start";
 				}
 				
-				highlightElements = `
-  <!-- Highlighted runner arrow -->
-  <defs>
-    <marker id="arrowhead-hist" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-      <polygon points="0 0, 10 3, 0 6" fill="#ff4444" />
-    </marker>
-  </defs>
+				const markerId = `arrowhead-hist-${i}`;
+				markerDefs += `
+    <marker id="${markerId}" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="${color}" />
+    </marker>`;
+				
+				highlightElements += `
+  <!-- Highlighted runner ${i + 1} arrow -->
   <line x1="${arrowStartX}" y1="${arrowStartY}" x2="${arrowEndX}" y2="${arrowEndY}" 
-        stroke="#ff4444" stroke-width="2" marker-end="url(#arrowhead-hist)" />
-  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="12" font-weight="bold" fill="#ff4444">${runnerName}</text>
-  <!-- Highlighted runner dot -->
-  <circle cx="${centerX.toFixed(2)}" cy="${y.toFixed(2)}" r="6" fill="#ff4444" opacity="1.0" stroke="#ffffff" stroke-width="2">
+        stroke="${color}" stroke-width="2" marker-end="url(#${markerId})" />
+  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="12" font-weight="bold" fill="${color}">${runnerName}</text>
+  <!-- Highlighted runner ${i + 1} dot -->
+  <circle cx="${centerX.toFixed(2)}" cy="${y.toFixed(2)}" r="6" fill="${color}" opacity="1.0" stroke="#ffffff" stroke-width="2">
     <title>${runnerName} - ${selectedRunner.czasnetto}</title>
   </circle>`;
 			}
 		}
+	}
+	
+	if (markerDefs) {
+		highlightElements = `
+  <!-- Marker definitions for arrows -->
+  <defs>${markerDefs}
+  </defs>` + highlightElements;
 	}
 
 	return `<?xml version="1.0" encoding="UTF-8"?>

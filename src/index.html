@@ -162,11 +162,31 @@
                 <option value="120">120 seconds</option>
               </select>
             </div>
-            <div class="filter-group">
-              <label for="runner-select">Highlight Runner:</label>
-              <select id="runner-select" aria-label="Runner selection">
-                <option value="">None</option>
-              </select>
+            <div class="filter-group runner-selection-group">
+              <label>Highlight Runners:</label>
+              <div id="runner-selectors-container">
+                <!-- Dynamic runner selectors will be added here -->
+              </div>
+              <button
+                type="button"
+                id="add-runner-btn"
+                class="add-runner-btn"
+                title="Add another runner to highlight"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  width="16"
+                  height="16"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                Add Runner
+              </button>
             </div>
           </div>
         </div>

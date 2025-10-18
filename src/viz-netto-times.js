@@ -5,6 +5,7 @@
 import {
 	generateAttribution,
 	generateWatermark,
+	getRunnerColor,
 	minutesToLabel,
 	parseNetTime,
 	scaleLinear,
@@ -16,10 +17,10 @@ const SVG_HEIGHT = 600;
 /**
  * Generate net times scatter plot SVG
  * @param {Array} records - Race results data
- * @param {Object|null} selectedRunner - The runner to highlight
+ * @param {Array} selectedRunners - Array of runners to highlight
  * @returns {string} SVG markup
  */
-export function generateNettoTimesSvg(records, selectedRunner = null) {
+export function generateNettoTimesSvg(records, selectedRunners = []) {
 	const PADDING_LEFT = 70;
 	const PADDING_RIGHT = 30;
 	const PADDING_TOP = 40;
@@ -72,10 +73,15 @@ export function generateNettoTimesSvg(records, selectedRunner = null) {
 		PADDING_TOP,
 	);
 
-	// Find selected runner in the points
-	let selectedPointIndex = null;
-	if (selectedRunner) {
-		selectedPointIndex = points.findIndex((p) => p.entry === selectedRunner);
+	// Find selected runners in the points
+	const selectedPointIndices = [];
+	if (selectedRunners && selectedRunners.length > 0) {
+		for (const runner of selectedRunners) {
+			const index = points.findIndex((p) => p.entry === runner);
+			if (index !== -1) {
+				selectedPointIndices.push(index);
+			}
+		}
 	}
 
 	// Plot points
@@ -84,10 +90,10 @@ export function generateNettoTimesSvg(records, selectedRunner = null) {
 		const point = points[index];
 		const cx = scaleX(index);
 		const cy = scaleY(point.seconds);
-		const isSelected = selectedPointIndex !== null && index === selectedPointIndex;
+		const isSelected = selectedPointIndices.includes(index);
 		
 		if (isSelected) {
-			// Skip selected point, we'll draw it last
+			// Skip selected points, we'll draw them last
 			continue;
 		}
 		
@@ -96,9 +102,14 @@ export function generateNettoTimesSvg(records, selectedRunner = null) {
 		);
 	}
 	
-	// Draw selected runner last (on top) with different styling
+	// Draw selected runners last (on top) with different styling for each
 	let highlightElements = "";
-	if (selectedPointIndex !== null) {
+	let markerDefs = "";
+	
+	for (let i = 0; i < selectedPointIndices.length; i++) {
+		const selectedPointIndex = selectedPointIndices[i];
+		const selectedRunner = selectedRunners[i];
+		const color = getRunnerColor(i);
 		const point = points[selectedPointIndex];
 		const cx = scaleX(selectedPointIndex);
 		const cy = scaleY(point.seconds);
@@ -109,14 +120,17 @@ export function generateNettoTimesSvg(records, selectedRunner = null) {
 		const spaceRight = (SVG_WIDTH - PADDING_RIGHT) - cx;
 		const spaceLeft = cx - PADDING_LEFT;
 		
+		// Add vertical offset for multiple runners to avoid label overlap
+		const verticalOffset = i * 25;
+		
 		let arrowStartX, arrowStartY, arrowEndX, arrowEndY, textX, textY, textAnchor;
 		
-		if (spaceAbove < 60 || spaceRight < 60) {
+		if (spaceAbove < (60 + verticalOffset) || spaceRight < 60) {
 			// Not enough space in top-right, try top-left
-			if (spaceLeft > 60 && spaceAbove > 40) {
+			if (spaceLeft > 60 && spaceAbove > (40 + verticalOffset)) {
 				// Place arrow from top-left
 				arrowStartX = cx - 60;
-				arrowStartY = cy - 40;
+				arrowStartY = cy - (40 + verticalOffset);
 				arrowEndX = cx - 8;
 				arrowEndY = cy - 8;
 				textX = arrowStartX - 5;
@@ -126,7 +140,7 @@ export function generateNettoTimesSvg(records, selectedRunner = null) {
 				// Fallback: place to the side with most space
 				if (spaceRight > spaceLeft) {
 					arrowStartX = cx + 60;
-					arrowStartY = cy - 20;
+					arrowStartY = cy - (20 + verticalOffset);
 					arrowEndX = cx + 8;
 					arrowEndY = cy - 8;
 					textX = arrowStartX + 5;
@@ -134,7 +148,7 @@ export function generateNettoTimesSvg(records, selectedRunner = null) {
 					textAnchor = "start";
 				} else {
 					arrowStartX = cx - 60;
-					arrowStartY = cy - 20;
+					arrowStartY = cy - (20 + verticalOffset);
 					arrowEndX = cx - 8;
 					arrowEndY = cy - 8;
 					textX = arrowStartX - 5;
@@ -145,7 +159,7 @@ export function generateNettoTimesSvg(records, selectedRunner = null) {
 		} else {
 			// Enough space in top-right, place arrow diagonally
 			arrowStartX = cx + 60;
-			arrowStartY = cy - 40;
+			arrowStartY = cy - (40 + verticalOffset);
 			arrowEndX = cx + 8;
 			arrowEndY = cy - 8;
 			textX = arrowStartX + 5;
@@ -153,20 +167,28 @@ export function generateNettoTimesSvg(records, selectedRunner = null) {
 			textAnchor = "start";
 		}
 		
-		highlightElements = `
-  <!-- Highlighted runner arrow -->
-  <defs>
-    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-      <polygon points="0 0, 10 3, 0 6" fill="#ff4444" />
-    </marker>
-  </defs>
+		const markerId = `arrowhead-${i}`;
+		markerDefs += `
+    <marker id="${markerId}" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="${color}" />
+    </marker>`;
+		
+		highlightElements += `
+  <!-- Highlighted runner ${i + 1} arrow -->
   <line x1="${arrowStartX}" y1="${arrowStartY}" x2="${arrowEndX}" y2="${arrowEndY}" 
-        stroke="#ff4444" stroke-width="2" marker-end="url(#arrowhead)" />
-  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="12" font-weight="bold" fill="#ff4444">${runnerName}</text>
-  <!-- Highlighted runner dot -->
-  <circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="5" fill="#ff4444" opacity="1.0" stroke="#ffffff" stroke-width="2">
+        stroke="${color}" stroke-width="2" marker-end="url(#${markerId})" />
+  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="12" font-weight="bold" fill="${color}">${runnerName}</text>
+  <!-- Highlighted runner ${i + 1} dot -->
+  <circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="5" fill="${color}" opacity="1.0" stroke="#ffffff" stroke-width="2">
     <title>${point.label}</title>
   </circle>`;
+	}
+	
+	if (markerDefs) {
+		highlightElements = `
+  <!-- Marker definitions for arrows -->
+  <defs>${markerDefs}
+  </defs>` + highlightElements;
 	}
 
 	const plotted = plottedCircles.join("\n") + highlightElements;

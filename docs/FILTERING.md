@@ -115,76 +115,113 @@ Showing 2,156 results
 
 ### 3. Runner Selection Filter
 
-**Purpose**: Highlight a specific runner across all visualizations
+**Purpose**: Highlight specific runners across all visualizations for easy comparison
 
 #### Selection Interface
-- **Dropdown**: Alphabetically sorted list of all runners
+- **Dynamic single-select dropdowns**: Each dropdown shows alphabetically sorted list of all runners
 - **Format**: "Last Name First Name (#Bib)"
 - **Example**: "Kowalski Jan (#42)"
-- **None option**: Clears highlighting
+- **Add runners**: Click the "+ Add Runner" button to add more selection dropdowns (up to 10)
+- **Remove runners**: Click the "×" button next to any dropdown to remove it
+- **Multiple runners**: Each runner gets a different color for easy identification
+
+#### How to Use
+1. **Select first runner**: Choose from the initial dropdown
+2. **Add more runners**: Click the "+ Add Runner" button
+3. **Select additional runners**: Use the new dropdowns that appear
+4. **Remove a runner**: Click the "×" button next to their dropdown
+5. **View comparison**: All selected runners appear highlighted across all visualizations
+
+#### Color Scheme for Multiple Runners
+When multiple runners are selected, they are highlighted with different colors:
+- **Runner 1**: Red (#ff4444)
+- **Runner 2**: Green (#00cc00)
+- **Runner 3**: Orange (#ff8800)
+- **Runner 4**: Purple (#8844ff)
+- **Runner 5**: Cyan (#00cccc)
+- Colors repeat for additional runners (6th runner gets red again, etc.)
 
 #### Effects on Visualizations
 
 **Net Times Scatter:**
-- Selected runner shown as larger red dot (5px vs 2px)
+- Each selected runner shown as larger colored dot (5px vs 2px)
 - White outline (2px) for visibility
-- Arrow annotation pointing to the dot
-- Runner name displayed near arrow
-- All other runners remain blue
+- Arrow annotation pointing to each dot
+- Runner name displayed near each arrow (in matching color)
+- All non-selected runners remain blue
 
 **Net Times Histogram:**
-- Bucket containing the runner marked with arrow
-- Arrow points to top of the bucket
-- Runner name displayed near arrow
-- Bucket not visually different (contains multiple runners)
+- Buckets containing selected runners marked with colored arrows
+- Each arrow points to top of the bucket
+- Runner names displayed near arrows (in matching colors)
+- Multiple runners in same bucket get vertically stacked labels
 
 **Stacked Start Buckets:**
-- Selected runner's position marked with red dot
+- Each selected runner's position marked with colored dot
 - Shows exact location within stacked column
-- Arrow annotation with runner name
-- Helps identify which start bucket and finish time
+- Arrow annotation with runner name (in matching color)
+- Helps compare which start bucket and finish time for each runner
 
 **Start vs Finish:**
-- Selected runner shown as larger red dot (6px vs 3px)
+- Each selected runner shown as larger colored dot (6px vs 3px)
 - White outline for visibility
-- Arrow annotation with runner name
-- Shows runner's start time and finish time position
+- Arrow annotation with runner name (in matching color)
+- Easy comparison of start times and finish times across multiple runners
 
 #### Arrow Positioning
 
-The app uses **adaptive positioning** to ensure labels are always visible:
+The app uses **adaptive positioning** with automatic vertical spacing to prevent label overlap:
+
+**For multiple runners:**
+- Each subsequent runner's label is offset vertically by 25px
+- Labels automatically adjust position to avoid collisions
+- Arrows intelligently choose between top-right, top-left, or side placement
 
 **Priority 1: Top-right diagonal** (default)
 ```
-          Name →
+          Runner 1 →
                 ↘
+          Runner 2 → ●
+                ↘    ●
                  ●
 ```
 
 **Priority 2: Top-left diagonal** (if no space on right)
 ```
-       ← Name
+       ← Runner 1
       ↙
-     ●
+← Runner 2 ●
+  ↙        ●
+ ●
 ```
 
 **Priority 3: Side placement** (if no space above)
 ```
-Name ← ● or ● → Name
+Runner 1 ← ● or ● → Runner 1
+Runner 2 ← ● or ● → Runner 2
 ```
 
 #### Use Cases
-- **Compare yourself** to the field
-- **Track a friend** across visualizations
-- **Study elite runners** performance patterns
-- **Identify specific runners** in dense plots
-- **Analyze overtaking** (start vs finish plot)
+- **Compare teammates** performance in the same race
+- **Compare yourself with friends** across all visualizations
+- **Study elite runners** and compare their patterns
+- **Analyze pacing strategies** of multiple runners
+- **Compare age group winners** across visualizations
+- **Track training group members** in the same race
+
+#### Tips for Multi-Runner Selection
+- **2-3 runners**: Best for detailed comparison
+- **4-5 runners**: Still readable, good for team analysis
+- **More than 5**: Colors repeat, labels may overlap in dense areas
+- **Maximum 10 runners**: Limited for performance and readability
+- **Remove unused**: Delete empty dropdowns to keep UI clean
 
 #### Technical Details
 - Runner list generated from full dataset (not filtered)
 - Index-based selection (maintains reference even after filtering)
 - Survives distance filter changes
 - Saved in session state (restored on page reload)
+- Array-based storage (supports unlimited runners, practical limit ~5)
 
 ---
 
@@ -197,12 +234,12 @@ All three filters work together:
 **Example Workflow:**
 1. Select "Marathon" distance → Shows only marathon runners
 2. Select "300s" bucket → Histogram displays 5-minute buckets
-3. Select specific runner → Runner highlighted if they ran marathon
+3. Select 2-3 specific runners → All highlighted with different colors for comparison
 
 **Important**: Runner highlighting only works if:
-- Runner is in the current distance filter
-- Runner has valid finish time
-- Runner appears in the visualization's data
+- Runners are in the current distance filter
+- Runners have valid finish times
+- Runners appear in the visualization's data
 
 ### Filter Persistence
 
@@ -381,21 +418,21 @@ const filtered = data.filter(r => r.odleglosc === selectedDistance);
 - Refresh page and reload result
 - Verify data is loaded (info section shows data)
 
-### Runner Not Highlighted
+### Runners Not Highlighted
 
 **Symptoms:**
-- Runner selected but not visible in visualizations
-- No arrow or red dot appears
+- Runners selected but not visible in visualizations
+- No arrows or colored dots appear
 
 **Possible Causes:**
-1. **Runner filtered out**: Check if runner's distance matches filter
-2. **Runner DNF**: Check if runner has valid finish time
-3. **Runner outside view**: Check if runner's time is in axis range
+1. **Runners filtered out**: Check if runners' distance matches filter
+2. **Runners DNF**: Check if runners have valid finish times
+3. **Runners outside view**: Check if runners' times are in axis range
 
 **Solutions:**
 - Set distance filter to "All Distances"
-- Verify runner completed the race
-- Check that runner appears in result data
+- Verify runners completed the race
+- Check that runners appear in result data
 
 ### Performance Issues
 

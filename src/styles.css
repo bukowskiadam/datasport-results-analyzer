@@ -545,6 +545,92 @@ footer a:hover {
   border-color: var(--border-color);
 }
 
+/* Special styling for runner selection with dynamic selectors */
+.filter-group.runner-selection-group {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+#runner-selectors-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.runner-selector-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.runner-selector {
+  flex: 1;
+  padding: 8px 16px;
+  font-size: 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.runner-selector:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.runner-selector:hover {
+  border-color: #999;
+}
+
+.remove-runner-btn {
+  padding: 8px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.remove-runner-btn:hover {
+  background-color: #d32f2f;
+}
+
+.remove-runner-btn svg {
+  display: block;
+}
+
+.add-runner-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: background-color 0.3s;
+  align-self: flex-start;
+}
+
+.add-runner-btn:hover {
+  background-color: #1565c0;
+}
+
+.add-runner-btn svg {
+  display: block;
+  flex-shrink: 0;
+}
+
 .distance-info {
   color: #666;
   font-size: 0.9rem;

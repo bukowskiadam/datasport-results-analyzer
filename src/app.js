@@ -49,7 +49,8 @@ const filtersSection = document.getElementById("filters-section");
 const distanceSelect = document.getElementById("distance-select");
 const distanceInfo = document.getElementById("distance-info");
 const bucketSizeSelect = document.getElementById("bucket-size-select");
-const runnerSelect = document.getElementById("runner-select");
+const runnerSelectorsContainer = document.getElementById("runner-selectors-container");
+const addRunnerBtn = document.getElementById("add-runner-btn");
 const filtersHeader = document.getElementById("filters-header");
 const filtersHeaderText = document.getElementById("filters-header-text");
 const filtersContent = document.getElementById("filters-content");
@@ -89,7 +90,7 @@ function saveSessionState() {
 		const filterState = {
 			distance: distanceSelect.value,
 			bucketSize: bucketSizeSelect.value,
-			runner: runnerSelect.value,
+			runners: getSelectedRunners(),
 		};
 		
 		// Save to localStorage for page refresh
@@ -165,17 +166,95 @@ function showResults() {
 	dataInfo.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+// Store runners list globally for reuse
+let availableRunners = [];
+
 /**
- * Setup runner selector
- * @param {Array} data - Full race results data
- * @param {string} [preselectedRunner] - Optional runner index to preselect
+ * Get currently selected runners from all dropdowns
+ * @returns {Array<string>} Array of selected runner indices
  */
-function setupRunnerSelector(data, preselectedRunner = null) {
-	// Populate runner select with all runners
-	runnerSelect.innerHTML = '<option value="">None</option>';
+function getSelectedRunners() {
+	const selects = runnerSelectorsContainer.querySelectorAll('.runner-selector');
+	return Array.from(selects)
+		.map(select => select.value)
+		.filter(value => value !== '');
+}
+
+/**
+ * Create a single runner selector with remove button
+ * @param {string} [selectedValue] - Optional pre-selected runner index
+ * @returns {HTMLElement} The selector row element
+ */
+function createRunnerSelector(selectedValue = '') {
+	const row = document.createElement('div');
+	row.className = 'runner-selector-row';
 	
+	const select = document.createElement('select');
+	select.className = 'runner-selector';
+	select.setAttribute('aria-label', 'Runner selection');
+	
+	// Add empty option
+	const emptyOption = document.createElement('option');
+	emptyOption.value = '';
+	emptyOption.textContent = 'Select a runner...';
+	select.appendChild(emptyOption);
+	
+	// Add all runners
+	for (const runner of availableRunners) {
+		const option = document.createElement('option');
+		option.value = runner.index.toString();
+		option.textContent = runner.displayName;
+		if (runner.index.toString() === selectedValue) {
+			option.selected = true;
+		}
+		select.appendChild(option);
+	}
+	
+	// Add change listener
+	select.addEventListener('change', () => {
+		regenerateVisualizations();
+	});
+	
+	const removeBtn = document.createElement('button');
+	removeBtn.type = 'button';
+	removeBtn.className = 'remove-runner-btn';
+	removeBtn.title = 'Remove this runner';
+	removeBtn.innerHTML = `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+			<line x1="18" y1="6" x2="6" y2="18"></line>
+			<line x1="6" y1="6" x2="18" y2="18"></line>
+		</svg>
+	`;
+	
+	removeBtn.addEventListener('click', () => {
+		row.remove();
+		regenerateVisualizations();
+		updateAddButtonVisibility();
+	});
+	
+	row.appendChild(select);
+	row.appendChild(removeBtn);
+	
+	return row;
+}
+
+/**
+ * Update visibility of add button based on number of selectors
+ */
+function updateAddButtonVisibility() {
+	const count = runnerSelectorsContainer.querySelectorAll('.runner-selector-row').length;
+	// Limit to 10 runners for performance
+	addRunnerBtn.style.display = count >= 10 ? 'none' : 'flex';
+}
+
+/**
+ * Setup runner selector system
+ * @param {Array} data - Full race results data
+ * @param {Array} [preselectedRunners] - Optional array of runner indices to preselect
+ */
+function setupRunnerSelector(data, preselectedRunners = null) {
 	// Create list of runners with their names and bib numbers
-	const runners = data
+	availableRunners = data
 		.map((entry, index) => {
 			const name = `${entry.nazwisko || ""} ${entry.imie || ""}`.trim();
 			const bib = entry.numer || "";
@@ -189,18 +268,23 @@ function setupRunnerSelector(data, preselectedRunner = null) {
 		})
 		.filter((r) => r.name)
 		.sort((a, b) => a.name.localeCompare(b.name));
-
-	for (const runner of runners) {
-		const option = document.createElement("option");
-		option.value = runner.index.toString();
-		option.textContent = runner.displayName;
-		runnerSelect.appendChild(option);
+	
+	// Clear existing selectors
+	runnerSelectorsContainer.innerHTML = '';
+	
+	// Add preselected runners or one empty selector
+	if (preselectedRunners && Array.isArray(preselectedRunners) && preselectedRunners.length > 0) {
+		for (const runnerIndex of preselectedRunners) {
+			if (availableRunners.some(r => r.index.toString() === runnerIndex)) {
+				runnerSelectorsContainer.appendChild(createRunnerSelector(runnerIndex));
+			}
+		}
+	} else {
+		// Add one empty selector by default
+		runnerSelectorsContainer.appendChild(createRunnerSelector());
 	}
 	
-	// Restore preselected runner if provided and valid
-	if (preselectedRunner && runners.some(r => r.index.toString() === preselectedRunner)) {
-		runnerSelect.value = preselectedRunner;
-	}
+	updateAddButtonVisibility();
 }
 
 /**
@@ -292,31 +376,33 @@ function generateVisualizations(data, savedState = null) {
 		setupDistanceFilter(data, savedState?.distance);
 		
 		// Setup runner selector
-		setupRunnerSelector(data, savedState?.runner);
+		setupRunnerSelector(data, savedState?.runners);
 
 		// Get filtered data
 		const filteredData = getFilteredData();
 		const bucketSize = Number.parseInt(bucketSizeSelect.value, 10);
-		const selectedRunnerIndex = runnerSelect.value ? Number.parseInt(runnerSelect.value, 10) : null;
-		const selectedRunner = selectedRunnerIndex !== null ? data[selectedRunnerIndex] : null;
+		const selectedRunners = getSelectedRunners()
+			.map(indexStr => Number.parseInt(indexStr, 10))
+			.map(index => data[index])
+			.filter(Boolean);
 
 		// Generate net times visualization
-		const nettoTimesSvg = generateNettoTimesSvg(filteredData, selectedRunner);
+		const nettoTimesSvg = generateNettoTimesSvg(filteredData, selectedRunners);
 		nettoTimesContainer.innerHTML = nettoTimesSvg;
 		generatedSvgs["netto-times"] = nettoTimesSvg;
 
 		// Generate histogram visualization
-		const histogramSvg = generateHistogramSvg(filteredData, bucketSize, selectedRunner);
+		const histogramSvg = generateHistogramSvg(filteredData, bucketSize, selectedRunners);
 		histogramContainer.innerHTML = histogramSvg;
 		generatedSvgs["histogram"] = histogramSvg;
 
 		// Generate start buckets visualization
-		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize, selectedRunner);
+		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize, selectedRunners);
 		startBucketsContainer.innerHTML = startBucketsSvg;
 		generatedSvgs["start-buckets"] = startBucketsSvg;
 
 		// Generate start vs finish visualization
-		const startVsFinishSvg = generateStartVsFinishSvg(filteredData, selectedRunner);
+		const startVsFinishSvg = generateStartVsFinishSvg(filteredData, selectedRunners);
 		startVsFinishContainer.innerHTML = startVsFinishSvg;
 		generatedSvgs["start-vs-finish"] = startVsFinishSvg;
 
@@ -339,25 +425,27 @@ function regenerateVisualizations() {
 
 	const filteredData = getFilteredData();
 	const bucketSize = Number.parseInt(bucketSizeSelect.value, 10);
-	const selectedRunnerIndex = runnerSelect.value ? Number.parseInt(runnerSelect.value, 10) : null;
-	const selectedRunner = selectedRunnerIndex !== null ? fullDataset[selectedRunnerIndex] : null;
+	const selectedRunners = getSelectedRunners()
+		.map(indexStr => Number.parseInt(indexStr, 10))
+		.map(index => fullDataset[index])
+		.filter(Boolean);
 	updateDistanceInfo(filteredData);
 
 	try {
 		// Regenerate all visualizations with filtered data
-		const nettoTimesSvg = generateNettoTimesSvg(filteredData, selectedRunner);
+		const nettoTimesSvg = generateNettoTimesSvg(filteredData, selectedRunners);
 		nettoTimesContainer.innerHTML = nettoTimesSvg;
 		generatedSvgs["netto-times"] = nettoTimesSvg;
 
-		const histogramSvg = generateHistogramSvg(filteredData, bucketSize, selectedRunner);
+		const histogramSvg = generateHistogramSvg(filteredData, bucketSize, selectedRunners);
 		histogramContainer.innerHTML = histogramSvg;
 		generatedSvgs["histogram"] = histogramSvg;
 
-		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize, selectedRunner);
+		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize, selectedRunners);
 		startBucketsContainer.innerHTML = startBucketsSvg;
 		generatedSvgs["start-buckets"] = startBucketsSvg;
 
-		const startVsFinishSvg = generateStartVsFinishSvg(filteredData, selectedRunner);
+		const startVsFinishSvg = generateStartVsFinishSvg(filteredData, selectedRunners);
 		startVsFinishContainer.innerHTML = startVsFinishSvg;
 		generatedSvgs["start-vs-finish"] = startVsFinishSvg;
 		
@@ -797,9 +885,10 @@ async function init() {
 		regenerateVisualizations();
 	});
 
-	// Runner selection change
-	runnerSelect.addEventListener("change", () => {
-		regenerateVisualizations();
+	// Add runner button click
+	addRunnerBtn.addEventListener("click", () => {
+		runnerSelectorsContainer.appendChild(createRunnerSelector());
+		updateAddButtonVisibility();
 	});
 
 	// Filters toggle header

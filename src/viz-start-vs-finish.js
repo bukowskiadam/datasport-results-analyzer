@@ -6,6 +6,7 @@ import {
 	calculateTimeInterval,
 	generateAttribution,
 	generateWatermark,
+	getRunnerColor,
 	minutesToLabel,
 	parseNetTime,
 	parseStartTime,
@@ -18,10 +19,10 @@ const SVG_HEIGHT = 800;
 /**
  * Generate start vs finish time scatter plot SVG
  * @param {Array} records - Race results data
- * @param {Object|null} selectedRunner - The runner to highlight
+ * @param {Array} selectedRunners - Array of runners to highlight
  * @returns {string} SVG markup
  */
-export function generateStartVsFinishSvg(records, selectedRunner = null) {
+export function generateStartVsFinishSvg(records, selectedRunners = []) {
 	const PADDING_LEFT = 70;
 	const PADDING_RIGHT = 30;
 	const PADDING_TOP = 40;
@@ -102,10 +103,13 @@ export function generateStartVsFinishSvg(records, selectedRunner = null) {
 		PADDING_TOP,
 	);
 
-	// Find selected runner in the points
-	let selectedPoint = null;
-	if (selectedRunner) {
-		selectedPoint = points.find((p) => p.entry === selectedRunner);
+	// Find selected runners in the points
+	const selectedPoints = [];
+	for (const runner of selectedRunners) {
+		const point = points.find((p) => p.entry === runner);
+		if (point) {
+			selectedPoints.push(point);
+		}
 	}
 
 	// Plot points
@@ -113,10 +117,10 @@ export function generateStartVsFinishSvg(records, selectedRunner = null) {
 	for (const point of points) {
 		const cx = scaleX(point.nettoSeconds);
 		const cy = scaleY(point.relativeStartSeconds);
-		const isSelected = selectedPoint && point === selectedPoint;
+		const isSelected = selectedPoints.includes(point);
 		
 		if (isSelected) {
-			// Skip selected point in the first pass, we'll draw it last
+			// Skip selected points in the first pass, we'll draw them last
 			continue;
 		}
 		
@@ -125,25 +129,30 @@ export function generateStartVsFinishSvg(records, selectedRunner = null) {
 		);
 	}
 	
-	// Draw selected runner last (on top) with different styling
+	// Draw selected runners last (on top) with different styling for each
 	let highlightElements = "";
-	if (selectedPoint) {
+	let markerDefs = "";
+	
+	for (let i = 0; i < selectedPoints.length; i++) {
+		const selectedPoint = selectedPoints[i];
+		const color = getRunnerColor(i);
 		const cx = scaleX(selectedPoint.nettoSeconds);
 		const cy = scaleY(selectedPoint.relativeStartSeconds);
 		
-		// Adaptive positioning: arrow points diagonally from top-right to bottom-left
+		// Adaptive positioning with vertical offset for multiple runners
+		const verticalOffset = i * 25;
 		const spaceAbove = cy - PADDING_TOP;
 		const spaceRight = (SVG_WIDTH - PADDING_RIGHT) - cx;
 		const spaceLeft = cx - PADDING_LEFT;
 		
 		let arrowStartX, arrowStartY, arrowEndX, arrowEndY, textX, textY, textAnchor;
 		
-		if (spaceAbove < 60 || spaceRight < 60) {
+		if (spaceAbove < (60 + verticalOffset) || spaceRight < 60) {
 			// Not enough space in top-right, try top-left
-			if (spaceLeft > 60 && spaceAbove > 40) {
+			if (spaceLeft > 60 && spaceAbove > (40 + verticalOffset)) {
 				// Place arrow from top-left
 				arrowStartX = cx - 60;
-				arrowStartY = cy - 40;
+				arrowStartY = cy - (40 + verticalOffset);
 				arrowEndX = cx - 8;
 				arrowEndY = cy - 8;
 				textX = arrowStartX - 5;
@@ -153,7 +162,7 @@ export function generateStartVsFinishSvg(records, selectedRunner = null) {
 				// Fallback: place to the side with most space
 				if (spaceRight > spaceLeft) {
 					arrowStartX = cx + 60;
-					arrowStartY = cy - 20;
+					arrowStartY = cy - (20 + verticalOffset);
 					arrowEndX = cx + 8;
 					arrowEndY = cy - 8;
 					textX = arrowStartX + 5;
@@ -161,7 +170,7 @@ export function generateStartVsFinishSvg(records, selectedRunner = null) {
 					textAnchor = "start";
 				} else {
 					arrowStartX = cx - 60;
-					arrowStartY = cy - 20;
+					arrowStartY = cy - (20 + verticalOffset);
 					arrowEndX = cx - 8;
 					arrowEndY = cy - 8;
 					textX = arrowStartX - 5;
@@ -172,7 +181,7 @@ export function generateStartVsFinishSvg(records, selectedRunner = null) {
 		} else {
 			// Enough space in top-right, place arrow diagonally
 			arrowStartX = cx + 60;
-			arrowStartY = cy - 40;
+			arrowStartY = cy - (40 + verticalOffset);
 			arrowEndX = cx + 8;
 			arrowEndY = cy - 8;
 			textX = arrowStartX + 5;
@@ -180,20 +189,28 @@ export function generateStartVsFinishSvg(records, selectedRunner = null) {
 			textAnchor = "start";
 		}
 		
-		highlightElements = `
-  <!-- Highlighted runner arrow -->
-  <defs>
-    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-      <polygon points="0 0, 10 3, 0 6" fill="#ff4444" />
-    </marker>
-  </defs>
+		const markerId = `arrowhead-${i}`;
+		markerDefs += `
+    <marker id="${markerId}" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="${color}" />
+    </marker>`;
+		
+		highlightElements += `
+  <!-- Highlighted runner ${i + 1} arrow -->
   <line x1="${arrowStartX}" y1="${arrowStartY}" x2="${arrowEndX}" y2="${arrowEndY}" 
-        stroke="#ff4444" stroke-width="2" marker-end="url(#arrowhead)" />
-  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="12" font-weight="bold" fill="#ff4444">${selectedPoint.name}</text>
-  <!-- Highlighted runner dot -->
-  <circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="6" fill="#ff4444" opacity="1.0" stroke="#ffffff" stroke-width="2">
+        stroke="${color}" stroke-width="2" marker-end="url(#${markerId})" />
+  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="12" font-weight="bold" fill="${color}">${selectedPoint.name}</text>
+  <!-- Highlighted runner ${i + 1} dot -->
+  <circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="6" fill="${color}" opacity="1.0" stroke="#ffffff" stroke-width="2">
     <title>${selectedPoint.label}</title>
   </circle>`;
+	}
+	
+	if (markerDefs) {
+		highlightElements = `
+  <!-- Marker definitions for arrows -->
+  <defs>${markerDefs}
+  </defs>` + highlightElements;
 	}
 	
 	const plotted = plottedCircles.join("\n") + highlightElements;
