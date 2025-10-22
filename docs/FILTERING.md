@@ -118,25 +118,33 @@ Showing 2,156 results
 **Purpose**: Highlight specific runners across all visualizations for easy comparison
 
 #### Selection Interface
-- **Dynamic multi-select dropdowns**: Each dropdown shows alphabetically sorted list of all runners
+- **Searchable input fields**: Each field allows typing to search for runners with autocomplete
+- **Real-time filtering**: Results appear as you type, showing up to 50 matching runners
+- **Search by**: Runner name, age category, or bib number
 - **Format**: "Last Name First Name (Age Category) #Bib"
 - **Example**: "Kowalski Jan (M40) #42"
-- **Add runners**: Click the "+ Add Runner" button to add more selection dropdowns (up to 10)
-- **Remove runners**: Click the "×" button next to any dropdown to remove it
-- **Share button**: A green "Share" button appears next to each selected runner
+- **Keyboard navigation**: Use arrow keys to navigate results, Enter to select, Escape to close
+- **Add runners**: Click the "+ Add Runner" button to add more search fields (up to 10)
+- **Remove runners**: Click the "×" button next to any field to remove it
 - **Multiple runners**: Each runner gets a different color for easy identification
-- **Default state**: One empty dropdown appears when data is loaded
+- **Default state**: One empty search field appears when data is loaded
+- **Mobile friendly**: Works great with virtual keyboards and touch screens
 
 #### How to Use
-1. **Select first runner**: Choose from the initial dropdown that appears when data loads
-2. **Add more runners**: Click the "+ Add Runner" button to add another dropdown
-3. **Select additional runners**: Use the new dropdowns that appear
-4. **Remove a runner**: Click the "×" button next to their dropdown to remove it
-5. **Share runner**: Click the green "Share" button next to a selected runner to share their performance
+1. **Search for first runner**: Type in the search field to filter runners by name, bib, or category
+2. **Select from results**: Click a runner from the autocomplete dropdown, or use arrow keys and Enter
+3. **Add more runners**: Click the "+ Add Runner" button to add another search field
+4. **Search additional runners**: Type in new fields to find and select more runners
+5. **Remove a runner**: Click the "×" button next to their field to remove it
 6. **View comparison**: All selected runners appear highlighted across all visualizations
 7. **Limit**: Maximum of 10 runners can be selected (button hides when limit reached)
 
-**Note**: The Share button appears only when a runner is selected from that dropdown.
+**Search Tips:**
+- Type any part of the runner's name (first or last)
+- Search by bib number for quick access
+- Results update as you type (shows top 50 matches)
+- Use arrow keys to navigate, Enter to select
+- Works great on mobile with virtual keyboard
 
 #### Color Scheme for Multiple Runners
 When multiple runners are selected, they are highlighted with different colors:
@@ -216,6 +224,7 @@ Runner 2 ← ● or ● → Runner 2
 - **Analyze pacing strategies** of multiple runners
 - **Compare age group winners** across visualizations
 - **Track training group members** in the same race
+- **Quick bib number search** for finding specific runners in large races (10,000+ runners)
 
 #### Tips for Multi-Runner Selection
 - **2-3 runners**: Best for detailed comparison
@@ -226,12 +235,15 @@ Runner 2 ← ● or ● → Runner 2
 
 #### Technical Details
 - Runner list generated from full dataset (not filtered)
+- Searchable autocomplete with real-time filtering
+- Shows up to 50 matching results for performance
 - Index-based selection (maintains reference even after filtering)
 - Survives distance filter changes
 - Saved in session state (restored on page reload)
 - Array-based storage in filterState: `runners: ["42", "156", "89"]`
 - Maximum 10 runners enforced by UI (for performance and readability)
 - Each runner selector is independently removable
+- Keyboard accessible (arrow keys, Enter, Escape)
 
 ---
 

@@ -564,44 +564,76 @@ footer a:hover {
   align-items: center;
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible; /* Changed to allow dropdown to show */
 }
 
-.runner-selector {
+.runner-selector-container {
+  position: relative;
   flex: 1 1 auto;
-  min-width: 0; /* Important for flex item truncation */
+  min-width: 0;
   max-width: 100%;
+}
+
+.runner-selector-input {
+  width: 100%;
   padding: 8px 16px;
   font-size: 1rem;
   border: 2px solid var(--border-color);
   border-radius: 6px;
   background-color: white;
-  cursor: pointer;
-  transition: border-color 0.3s;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  width: 100%;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 36px;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-.runner-selector option {
-  white-space: normal;
-}
-
-.runner-selector:focus {
+.runner-selector-input:focus {
   outline: none;
   border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
 }
 
-.runner-selector:hover {
+.runner-selector-input:hover {
   border-color: #999;
+}
+
+.runner-selector-input::placeholder {
+  color: #999;
+}
+
+.runner-selector-dropdown {
+  position: fixed;
+  max-height: 300px;
+  overflow-y: auto;
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+}
+
+.runner-selector-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.runner-selector-item:last-child {
+  border-bottom: none;
+}
+
+.runner-selector-item:hover,
+.runner-selector-item.focused {
+  background-color: #e3f2fd;
+}
+
+.runner-selector-item.no-results {
+  color: #999;
+  cursor: default;
+  text-align: center;
+  font-style: italic;
+}
+
+.runner-selector-item.no-results:hover {
+  background-color: white;
 }
 
 .remove-runner-btn {
@@ -1110,11 +1142,18 @@ footer a:hover {
     flex-wrap: wrap;
   }
   
-  .runner-selector {
-    padding: 6px 12px;
-    font-size: 0.9rem;
-    flex: 1;
-    min-width: 150px;
+  .runner-selector-input {
+    padding: 8px 12px;
+    font-size: 1rem; /* Keep 1rem for better mobile readability */
+  }
+  
+  .runner-selector-dropdown {
+    font-size: 0.95rem;
+    max-height: 250px;
+  }
+  
+  .runner-selector-item {
+    padding: 10px 12px;
   }
   
   .remove-runner-btn {

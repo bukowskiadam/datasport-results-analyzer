@@ -192,13 +192,13 @@ function showResults() {
 let availableRunners = [];
 
 /**
- * Get currently selected runners from all dropdowns
+ * Get currently selected runners from all inputs
  * @returns {Array<string>} Array of selected runner indices
  */
 function getSelectedRunners() {
-	const selects = runnerSelectorsContainer.querySelectorAll(".runner-selector");
-	return Array.from(selects)
-		.map((select) => select.value)
+	const inputs = runnerSelectorsContainer.querySelectorAll(".runner-selector-input");
+	return Array.from(inputs)
+		.map((input) => input.dataset.selectedIndex)
 		.filter((value) => value !== "");
 }
 
@@ -211,59 +211,174 @@ function createRunnerSelector(selectedValue = "") {
 	const row = document.createElement("div");
 	row.className = "runner-selector-row";
 
-	const select = document.createElement("select");
-	select.className = "runner-selector";
-	select.setAttribute("aria-label", "Runner selection");
+	// Create container for input and dropdown
+	const inputContainer = document.createElement("div");
+	inputContainer.className = "runner-selector-container";
 
-	// Add empty option
-	const emptyOption = document.createElement("option");
-	emptyOption.value = "";
-	emptyOption.textContent = "Select a runner...";
-	select.appendChild(emptyOption);
+	// Create searchable input
+	const input = document.createElement("input");
+	input.type = "text";
+	input.className = "runner-selector-input";
+	input.placeholder = "Search for a runner...";
+	input.setAttribute("aria-label", "Runner selection");
+	input.setAttribute("autocomplete", "off");
+	input.dataset.selectedIndex = selectedValue || "";
 
-	// Add all runners
-	for (const runner of availableRunners) {
-		const option = document.createElement("option");
-		option.value = runner.index.toString();
-		option.textContent = runner.displayName;
-		if (runner.index.toString() === selectedValue) {
-			option.selected = true;
+	// Set initial value if preselected
+	if (selectedValue) {
+		const preselectedRunner = availableRunners.find(
+			r => r.index.toString() === selectedValue
+		);
+		if (preselectedRunner) {
+			input.value = preselectedRunner.displayName;
 		}
-		select.appendChild(option);
 	}
 
-	// Add change listener
-	select.addEventListener("change", () => {
-		const isSelected = select.value !== "";
-		trackEvent(isSelected ? "filter-runner-selected" : "filter-runner-cleared");
-		// Update share button visibility
-		shareBtn.style.display = isSelected ? "flex" : "none";
-		regenerateVisualizations();
+	// Create dropdown for autocomplete results
+	const dropdown = document.createElement("div");
+	dropdown.className = "runner-selector-dropdown";
+	dropdown.style.display = "none";
+
+	// Track focused item index
+	let focusedItemIndex = -1;
+
+	// Filter and display runners based on input
+	const updateDropdown = () => {
+		const searchTerm = input.value.toLowerCase().trim();
+		
+		if (searchTerm.length === 0) {
+			dropdown.style.display = "none";
+			return;
+		}
+
+		// Filter runners matching search term
+		const matches = availableRunners.filter(runner => 
+			runner.displayName.toLowerCase().includes(searchTerm) ||
+			runner.name.toLowerCase().includes(searchTerm) ||
+			runner.bib.includes(searchTerm)
+		).slice(0, 50); // Limit to 50 results for performance
+
+		if (matches.length === 0) {
+			dropdown.innerHTML = '<div class="runner-selector-item no-results">No runners found</div>';
+			positionDropdown();
+			dropdown.style.display = "block";
+			return;
+		}
+
+		dropdown.innerHTML = matches.map((runner, index) => 
+			`<div class="runner-selector-item" data-index="${runner.index}" data-item-index="${index}">${runner.displayName}</div>`
+		).join("");
+		positionDropdown();
+		dropdown.style.display = "block";
+		focusedItemIndex = -1;
+
+		// Add click listeners to items
+		const items = dropdown.querySelectorAll(".runner-selector-item:not(.no-results)");
+		items.forEach(item => {
+			item.addEventListener("click", () => {
+				const runnerIndex = item.dataset.index;
+				const runner = availableRunners.find(r => r.index.toString() === runnerIndex);
+				if (runner) {
+					input.value = runner.displayName;
+					input.dataset.selectedIndex = runnerIndex;
+					dropdown.style.display = "none";
+					trackEvent("filter-runner-selected");
+					regenerateVisualizations();
+				}
+			});
+		});
+	};
+
+	// Position dropdown using fixed positioning to avoid overflow issues
+	const positionDropdown = () => {
+		const rect = input.getBoundingClientRect();
+		dropdown.style.position = "fixed";
+		dropdown.style.left = `${rect.left}px`;
+		dropdown.style.top = `${rect.bottom + 4}px`;
+		dropdown.style.width = `${rect.width}px`;
+	};
+
+	// Input event listener
+	input.addEventListener("input", () => {
+		// Clear selection when user types
+		if (input.dataset.selectedIndex) {
+			input.dataset.selectedIndex = "";
+		}
+		updateDropdown();
 	});
 
-	const shareBtn = document.createElement("button");
-	shareBtn.type = "button";
-	shareBtn.className = "share-runner-btn";
-	shareBtn.title = "Share runner performance";
-	shareBtn.style.display = selectedValue ? "flex" : "none";
-	shareBtn.innerHTML = `
-		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-			<circle cx="18" cy="5" r="3"></circle>
-			<circle cx="6" cy="12" r="3"></circle>
-			<circle cx="18" cy="19" r="3"></circle>
-			<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-			<line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-		</svg>
-		Share
-	`;
-
-	shareBtn.addEventListener("click", () => {
-		const runnerIndex = select.value;
-		if (runnerIndex && fullDataset) {
-			trackEvent("runner-share-clicked");
-			handleShareRunner(runnerIndex);
+	// Focus event listener
+	input.addEventListener("focus", () => {
+		if (input.value.length > 0) {
+			positionDropdown();
+			updateDropdown();
 		}
 	});
+
+	// Update dropdown position on scroll
+	let scrollListener = null;
+	input.addEventListener("focusin", () => {
+		if (!scrollListener) {
+			scrollListener = () => {
+				if (dropdown.style.display === "block") {
+					positionDropdown();
+				}
+			};
+			window.addEventListener("scroll", scrollListener, true);
+			window.addEventListener("resize", scrollListener);
+		}
+	});
+
+	input.addEventListener("focusout", () => {
+		if (scrollListener) {
+			window.removeEventListener("scroll", scrollListener, true);
+			window.removeEventListener("resize", scrollListener);
+			scrollListener = null;
+		}
+	});
+
+	// Blur event listener (with delay to allow clicking dropdown items)
+	input.addEventListener("blur", () => {
+		setTimeout(() => {
+			dropdown.style.display = "none";
+		}, 200);
+	});
+
+	// Keyboard navigation
+	input.addEventListener("keydown", (e) => {
+		const items = dropdown.querySelectorAll(".runner-selector-item:not(.no-results)");
+		
+		if (e.key === "ArrowDown") {
+			e.preventDefault();
+			if (items.length > 0) {
+				focusedItemIndex = Math.min(focusedItemIndex + 1, items.length - 1);
+				items.forEach((item, idx) => {
+					item.classList.toggle("focused", idx === focusedItemIndex);
+				});
+				items[focusedItemIndex]?.scrollIntoView({ block: "nearest" });
+			}
+		} else if (e.key === "ArrowUp") {
+			e.preventDefault();
+			if (items.length > 0) {
+				focusedItemIndex = Math.max(focusedItemIndex - 1, 0);
+				items.forEach((item, idx) => {
+					item.classList.toggle("focused", idx === focusedItemIndex);
+				});
+				items[focusedItemIndex]?.scrollIntoView({ block: "nearest" });
+			}
+		} else if (e.key === "Enter") {
+			e.preventDefault();
+			if (focusedItemIndex >= 0 && items[focusedItemIndex]) {
+				items[focusedItemIndex].click();
+			}
+		} else if (e.key === "Escape") {
+			dropdown.style.display = "none";
+		}
+	});
+
+
+	inputContainer.appendChild(input);
+	inputContainer.appendChild(dropdown);
 
 	const removeBtn = document.createElement("button");
 	removeBtn.type = "button";
@@ -283,8 +398,9 @@ function createRunnerSelector(selectedValue = "") {
 		updateAddButtonVisibility();
 	});
 	
-	row.appendChild(select);
-	row.appendChild(removeBtn);	return row;
+	row.appendChild(inputContainer);
+	row.appendChild(removeBtn);
+	return row;
 }
 
 /**
