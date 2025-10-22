@@ -55,6 +55,9 @@ This is a datasport race results analyzer that generates SVG visualizations from
 - Export only what needs to be public
 - Always use named exports - no default exports allowed
 - Import multiple exports using destructuring: `import { fn1, fn2 } from './module.js'`
+- **UI components** should be placed in `/src/components/` directory
+- **Components must be pure functions** that receive dependencies as parameters (dependency injection)
+- **Use callback patterns** to keep components decoupled from app-specific logic
 
 ### Data Processing
 
@@ -85,12 +88,39 @@ This is a datasport race results analyzer that generates SVG visualizations from
 
 All feature documentation is located in the `/docs` folder:
 
-- **[OVERVIEW.md](../docs/OVERVIEW.md)** - High-level feature summary and index
+- **[OVERVIEW.md](../docs/OVERVIEW.md)** - High-level feature summary, architecture, and index
 - **[DATA_LOADING.md](../docs/DATA_LOADING.md)** - Data loading, upload, CORS, validation
 - **[STORAGE.md](../docs/STORAGE.md)** - IndexedDB storage, result management, quota
 - **[MEMORY_FEATURE.md](../docs/MEMORY_FEATURE.md)** - Session persistence and restoration
 - **[FILTERING.md](../docs/FILTERING.md)** - Distance, bucket size, and runner filters
 - **[VISUALIZATIONS.md](../docs/VISUALIZATIONS.md)** - All visualization types and features
+
+### Code Architecture
+
+The codebase follows a modular component-based architecture:
+
+```
+src/
+├── app.js                     # Main controller (orchestration)
+├── components/                # Reusable UI components
+│   ├── messages.js           # Error/success messages
+│   ├── result-card.js        # Result card HTML generation
+│   ├── runner-selector.js    # Searchable runner selector
+│   └── share-modal.js        # Share modal and PNG export
+├── datasport-fetcher.js      # Data fetching utilities
+├── storage.js                # IndexedDB operations
+├── utils.js                  # Utility functions
+├── visualizations.js         # Visualization exports
+└── viz-*.js                  # Individual visualization generators
+```
+
+When creating new components:
+
+- Place in `/src/components/` directory
+- Use named exports only
+- Pass dependencies as parameters (no global access)
+- Use callbacks for interactions
+- Keep components pure and testable
 
 ### Documentation Maintenance Rules
 

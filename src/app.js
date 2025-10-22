@@ -2,6 +2,14 @@
  * Main application controller for the web interface
  */
 
+import { hideError, showError } from "./components/messages.js";
+import { createResultCard } from "./components/result-card.js";
+import {
+	createRunnerSelector,
+	getSelectedRunners,
+	prepareRunnersList,
+} from "./components/runner-selector.js";
+import { downloadAsPng, showShareModal } from "./components/share-modal.js";
 import { extractResultsId, getJsonUrl } from "./datasport-fetcher.js";
 import {
 	clearAllResults,
@@ -112,7 +120,7 @@ function saveSessionState() {
 		const filterState = {
 			distance: distanceSelect.value,
 			bucketSize: bucketSizeSelect.value,
-			runners: getSelectedRunners(),
+			runners: getSelectedRunners(runnerSelectorsContainer),
 		};
 
 		// Save to localStorage for page refresh
@@ -161,25 +169,6 @@ function clearSessionState() {
 }
 
 /**
- * Show error message to user
- * @param {string} message - Error message to display
- */
-function showError(message) {
-	errorMessage.textContent = message;
-	errorMessage.classList.add("visible");
-	setTimeout(() => {
-		errorMessage.classList.remove("visible");
-	}, 8000);
-}
-
-/**
- * Hide error message
- */
-function hideError() {
-	errorMessage.classList.remove("visible");
-}
-
-/**
  * Show results section
  */
 function showResults() {
@@ -190,218 +179,6 @@ function showResults() {
 
 // Store runners list globally for reuse
 let availableRunners = [];
-
-/**
- * Get currently selected runners from all inputs
- * @returns {Array<string>} Array of selected runner indices
- */
-function getSelectedRunners() {
-	const inputs = runnerSelectorsContainer.querySelectorAll(".runner-selector-input");
-	return Array.from(inputs)
-		.map((input) => input.dataset.selectedIndex)
-		.filter((value) => value !== "");
-}
-
-/**
- * Create a single runner selector with remove button
- * @param {string} [selectedValue] - Optional pre-selected runner index
- * @returns {HTMLElement} The selector row element
- */
-function createRunnerSelector(selectedValue = "") {
-	const row = document.createElement("div");
-	row.className = "runner-selector-row";
-
-	// Create container for input and dropdown
-	const inputContainer = document.createElement("div");
-	inputContainer.className = "runner-selector-container";
-
-	// Create searchable input
-	const input = document.createElement("input");
-	input.type = "text";
-	input.className = "runner-selector-input";
-	input.placeholder = "Search for a runner...";
-	input.setAttribute("aria-label", "Runner selection");
-	input.setAttribute("autocomplete", "off");
-	input.dataset.selectedIndex = selectedValue || "";
-
-	// Set initial value if preselected
-	if (selectedValue) {
-		const preselectedRunner = availableRunners.find(
-			r => r.index.toString() === selectedValue
-		);
-		if (preselectedRunner) {
-			input.value = preselectedRunner.displayName;
-		}
-	}
-
-	// Create dropdown for autocomplete results
-	const dropdown = document.createElement("div");
-	dropdown.className = "runner-selector-dropdown";
-	dropdown.style.display = "none";
-
-	// Track focused item index
-	let focusedItemIndex = -1;
-
-	// Filter and display runners based on input
-	const updateDropdown = () => {
-		const searchTerm = input.value.toLowerCase().trim();
-		
-		if (searchTerm.length === 0) {
-			dropdown.style.display = "none";
-			return;
-		}
-
-		// Filter runners matching search term
-		const matches = availableRunners.filter(runner => 
-			runner.displayName.toLowerCase().includes(searchTerm) ||
-			runner.name.toLowerCase().includes(searchTerm) ||
-			runner.bib.includes(searchTerm)
-		).slice(0, 50); // Limit to 50 results for performance
-
-		if (matches.length === 0) {
-			dropdown.innerHTML = '<div class="runner-selector-item no-results">No runners found</div>';
-			positionDropdown();
-			dropdown.style.display = "block";
-			return;
-		}
-
-		dropdown.innerHTML = matches.map((runner, index) => 
-			`<div class="runner-selector-item" data-index="${runner.index}" data-item-index="${index}">${runner.displayName}</div>`
-		).join("");
-		positionDropdown();
-		dropdown.style.display = "block";
-		focusedItemIndex = -1;
-
-		// Add click listeners to items
-		const items = dropdown.querySelectorAll(".runner-selector-item:not(.no-results)");
-		items.forEach(item => {
-			item.addEventListener("click", () => {
-				const runnerIndex = item.dataset.index;
-				const runner = availableRunners.find(r => r.index.toString() === runnerIndex);
-				if (runner) {
-					input.value = runner.displayName;
-					input.dataset.selectedIndex = runnerIndex;
-					dropdown.style.display = "none";
-					trackEvent("filter-runner-selected");
-					regenerateVisualizations();
-				}
-			});
-		});
-	};
-
-	// Position dropdown using fixed positioning to avoid overflow issues
-	const positionDropdown = () => {
-		const rect = input.getBoundingClientRect();
-		dropdown.style.position = "fixed";
-		dropdown.style.left = `${rect.left}px`;
-		dropdown.style.top = `${rect.bottom + 4}px`;
-		dropdown.style.width = `${rect.width}px`;
-	};
-
-	// Input event listener
-	input.addEventListener("input", () => {
-		// Clear selection when user types
-		if (input.dataset.selectedIndex) {
-			input.dataset.selectedIndex = "";
-		}
-		updateDropdown();
-	});
-
-	// Focus event listener
-	input.addEventListener("focus", () => {
-		if (input.value.length > 0) {
-			positionDropdown();
-			updateDropdown();
-		}
-	});
-
-	// Update dropdown position on scroll
-	let scrollListener = null;
-	input.addEventListener("focusin", () => {
-		if (!scrollListener) {
-			scrollListener = () => {
-				if (dropdown.style.display === "block") {
-					positionDropdown();
-				}
-			};
-			window.addEventListener("scroll", scrollListener, true);
-			window.addEventListener("resize", scrollListener);
-		}
-	});
-
-	input.addEventListener("focusout", () => {
-		if (scrollListener) {
-			window.removeEventListener("scroll", scrollListener, true);
-			window.removeEventListener("resize", scrollListener);
-			scrollListener = null;
-		}
-	});
-
-	// Blur event listener (with delay to allow clicking dropdown items)
-	input.addEventListener("blur", () => {
-		setTimeout(() => {
-			dropdown.style.display = "none";
-		}, 200);
-	});
-
-	// Keyboard navigation
-	input.addEventListener("keydown", (e) => {
-		const items = dropdown.querySelectorAll(".runner-selector-item:not(.no-results)");
-		
-		if (e.key === "ArrowDown") {
-			e.preventDefault();
-			if (items.length > 0) {
-				focusedItemIndex = Math.min(focusedItemIndex + 1, items.length - 1);
-				items.forEach((item, idx) => {
-					item.classList.toggle("focused", idx === focusedItemIndex);
-				});
-				items[focusedItemIndex]?.scrollIntoView({ block: "nearest" });
-			}
-		} else if (e.key === "ArrowUp") {
-			e.preventDefault();
-			if (items.length > 0) {
-				focusedItemIndex = Math.max(focusedItemIndex - 1, 0);
-				items.forEach((item, idx) => {
-					item.classList.toggle("focused", idx === focusedItemIndex);
-				});
-				items[focusedItemIndex]?.scrollIntoView({ block: "nearest" });
-			}
-		} else if (e.key === "Enter") {
-			e.preventDefault();
-			if (focusedItemIndex >= 0 && items[focusedItemIndex]) {
-				items[focusedItemIndex].click();
-			}
-		} else if (e.key === "Escape") {
-			dropdown.style.display = "none";
-		}
-	});
-
-
-	inputContainer.appendChild(input);
-	inputContainer.appendChild(dropdown);
-
-	const removeBtn = document.createElement("button");
-	removeBtn.type = "button";
-	removeBtn.className = "remove-runner-btn";
-	removeBtn.title = "Remove this runner";
-	removeBtn.innerHTML = `
-		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-			<line x1="18" y1="6" x2="6" y2="18"></line>
-			<line x1="6" y1="6" x2="18" y2="18"></line>
-		</svg>
-	`;
-
-	removeBtn.addEventListener("click", () => {
-		trackEvent("filter-runner-removed");
-		row.remove();
-		regenerateVisualizations();
-		updateAddButtonVisibility();
-	});
-	
-	row.appendChild(inputContainer);
-	row.appendChild(removeBtn);
-	return row;
-}
 
 /**
  * Update visibility of add button based on number of selectors
@@ -420,34 +197,8 @@ function updateAddButtonVisibility() {
  * @param {Array} [preselectedRunners] - Optional array of runner indices to preselect
  */
 function setupRunnerSelector(data, preselectedRunners = null) {
-	// Create list of runners with their names, bib numbers, and age categories
-	availableRunners = data
-		.map((entry, index) => {
-			const name = `${entry.nazwisko || ""} ${entry.imie || ""}`.trim();
-			const bib = entry.numer || "";
-			const category = entry.katw || "";
-
-			// Build display name: Name (Category) #Bib or Name (Category) or Name #Bib or Name
-			let displayName = name;
-			if (category && bib) {
-				displayName = `${name} (${category}) #${bib}`;
-			} else if (category) {
-				displayName = `${name} (${category})`;
-			} else if (bib) {
-				displayName = `${name} #${bib}`;
-			}
-
-			return {
-				index,
-				name,
-				bib,
-				category,
-				displayName,
-				entry,
-			};
-		})
-		.filter((r) => r.name)
-		.sort((a, b) => a.name.localeCompare(b.name));
+	// Prepare list of runners
+	availableRunners = prepareRunnersList(data);
 
 	// Clear existing selectors
 	runnerSelectorsContainer.innerHTML = "";
@@ -460,12 +211,25 @@ function setupRunnerSelector(data, preselectedRunners = null) {
 	) {
 		for (const runnerIndex of preselectedRunners) {
 			if (availableRunners.some((r) => r.index.toString() === runnerIndex)) {
-				runnerSelectorsContainer.appendChild(createRunnerSelector(runnerIndex));
+				runnerSelectorsContainer.appendChild(
+					createRunnerSelector(
+						availableRunners,
+						regenerateVisualizations,
+						trackEvent,
+						runnerIndex,
+					),
+				);
 			}
 		}
 	} else {
 		// Add one empty selector by default
-		runnerSelectorsContainer.appendChild(createRunnerSelector());
+		runnerSelectorsContainer.appendChild(
+			createRunnerSelector(
+				availableRunners,
+				regenerateVisualizations,
+				trackEvent,
+			),
+		);
 	}
 
 	updateAddButtonVisibility();
@@ -568,7 +332,7 @@ function generateVisualizations(data, savedState = null) {
 		// Get filtered data
 		const filteredData = getFilteredData();
 		const bucketSize = Number.parseInt(bucketSizeSelect.value, 10);
-		const selectedRunners = getSelectedRunners()
+		const selectedRunners = getSelectedRunners(runnerSelectorsContainer)
 			.map((indexStr) => Number.parseInt(indexStr, 10))
 			.map((index) => data[index])
 			.filter(Boolean);
@@ -623,7 +387,7 @@ function regenerateVisualizations() {
 
 	const filteredData = getFilteredData();
 	const bucketSize = Number.parseInt(bucketSizeSelect.value, 10);
-	const selectedRunners = getSelectedRunners()
+	const selectedRunners = getSelectedRunners(runnerSelectorsContainer)
 		.map((indexStr) => Number.parseInt(indexStr, 10))
 		.map((index) => fullDataset[index])
 		.filter(Boolean);
@@ -684,46 +448,6 @@ function downloadSvg(svgContent, filename) {
 }
 
 /**
- * Convert SVG to PNG blob
- * @param {string} svgString - SVG markup
- * @param {number} width - Desired width
- * @param {number} height - Desired height
- * @returns {Promise<Blob>} PNG blob
- */
-async function svgToPng(svgString, width, height) {
-	return new Promise((resolve, reject) => {
-		const canvas = document.createElement('canvas');
-		canvas.width = width * 2; // 2x for better quality
-		canvas.height = height * 2;
-		const ctx = canvas.getContext('2d');
-		
-		const img = new Image();
-		const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-		const url = URL.createObjectURL(blob);
-		
-		img.onload = () => {
-			ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-			URL.revokeObjectURL(url);
-			
-			canvas.toBlob((pngBlob) => {
-				if (pngBlob) {
-					resolve(pngBlob);
-				} else {
-					reject(new Error('Failed to convert to PNG'));
-				}
-			}, 'image/png');
-		};
-		
-		img.onerror = () => {
-			URL.revokeObjectURL(url);
-			reject(new Error('Failed to load SVG'));
-		};
-		
-		img.src = url;
-	});
-}
-
-/**
  * Handle sharing a visualization
  * @param {string} vizType - Type of visualization (key for generatedSvgs)
  * @param {string} svgContent - SVG content
@@ -731,165 +455,24 @@ async function svgToPng(svgString, width, height) {
 function handleShareVisualization(vizType, svgContent) {
 	try {
 		const raceName = filtersHeaderText.textContent || "Race Results";
-		
+
 		// Visualization name mapping
 		const vizNames = {
-			'netto-times': 'Net Finish Times',
-			'histogram': 'Finish Times Histogram',
-			'start-buckets': 'Start Time Buckets Histogram',
-			'start-vs-finish': 'Start vs Finish Time Analysis'
+			"netto-times": "Net Finish Times",
+			histogram: "Finish Times Histogram",
+			"start-buckets": "Start Time Buckets Histogram",
+			"start-vs-finish": "Start vs Finish Time Analysis",
 		};
-		
+
 		const vizName = vizNames[vizType] || vizType;
-		showShareModal(svgContent, vizName, raceName, vizType);
-		trackEvent('visualization-share-clicked', { visualization: vizType });
+		showShareModal(svgContent, vizName, raceName, vizType, trackEvent, (msg) =>
+			showError(msg, errorMessage),
+		);
+		trackEvent("visualization-share-clicked", { visualization: vizType });
 	} catch (error) {
 		console.error("Failed to share visualization:", error);
-		showError(`Failed to share visualization: ${error.message}`);
+		showError(`Failed to share visualization: ${error.message}`, errorMessage);
 	}
-}
-
-/**
- * Show share modal with options
- * @param {string} svgContent - Generated SVG content
- * @param {string} vizName - Visualization name
- * @param {string} raceName - Race name
- * @param {string} vizType - Visualization type key
- */
-function showShareModal(svgContent, vizName, raceName, vizType) {
-	// Create modal overlay
-	const modal = document.createElement("div");
-	modal.className = "share-modal-overlay";
-	modal.innerHTML = `
-		<div class="share-modal">
-			<div class="share-modal-header">
-				<h3>Share ${vizName}</h3>
-				<button class="share-modal-close" title="Close">&times;</button>
-			</div>
-			<div class="share-modal-content">
-				<div class="share-preview">
-					${svgContent}
-				</div>
-				<div class="share-actions">
-					<button class="share-action-btn native-share-btn" data-action="native-share">
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-							<circle cx="18" cy="5" r="3"></circle>
-							<circle cx="6" cy="12" r="3"></circle>
-							<circle cx="18" cy="19" r="3"></circle>
-							<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-							<line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-						</svg>
-						Share via...
-					</button>
-					<button class="share-action-btn twitter-btn" data-action="twitter">
-						<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-							<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
-						</svg>
-						Share on X
-					</button>
-					<button class="share-action-btn facebook-btn" data-action="facebook">
-						<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-							<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
-						</svg>
-						Share on Facebook
-					</button>
-				</div>
-				<div class="share-info">
-					<p><strong>Tip:</strong> Use "Share via..." to post directly to social media apps (mobile), or share to X/Facebook (all devices).</p>
-				</div>
-				<div class="share-support">
-					<p>☕ Enjoying this tool? <a href="https://tipped.pl/bukowski" target="_blank" rel="noopener">Buy me a coffee</a> to support development!</p>
-				</div>
-			</div>
-		</div>
-	`;
-
-	document.body.appendChild(modal);
-	
-	// Generate share text
-	const appUrl = "https://bukowskiadam.github.io/datasport-results-analyzer/";
-	const shareText = `Check out this ${vizName} from ${raceName}! Analyzed with datasport-results-analyzer`;
-	
-	// Add event listeners
-	const closeBtn = modal.querySelector(".share-modal-close");
-	closeBtn.addEventListener("click", () => {
-		document.body.removeChild(modal);
-	});
-
-	// Close on overlay click
-	modal.addEventListener("click", (e) => {
-		if (e.target === modal) {
-			document.body.removeChild(modal);
-		}
-	});
-
-	// Action buttons
-	const nativeShareBtn = modal.querySelector('[data-action="native-share"]');
-	nativeShareBtn.addEventListener("click", async () => {
-		try {
-			const filename = `${raceName.replace(/\s+/g, "-")}-${vizType}.png`;
-			const pngBlob = await svgToPng(svgContent, 1200, 600);
-			
-			// Check if Web Share API is available
-			if (navigator.share && navigator.canShare) {
-				const file = new File([pngBlob], filename, { type: 'image/png' });
-				const shareData = {
-					files: [file],
-					title: vizName,
-					text: shareText
-				};
-				
-				if (navigator.canShare(shareData)) {
-					await navigator.share(shareData);
-					trackEvent('visualization-shared-native', { visualization: vizType });
-				} else {
-					// Fallback: download the image
-					const url = URL.createObjectURL(pngBlob);
-					const link = document.createElement('a');
-					link.href = url;
-					link.download = filename;
-					document.body.appendChild(link);
-					link.click();
-					document.body.removeChild(link);
-					URL.revokeObjectURL(url);
-					showError('Native sharing not available. Image downloaded instead.');
-				}
-			} else {
-				// Fallback: download the image
-				const url = URL.createObjectURL(pngBlob);
-				const link = document.createElement('a');
-				link.href = url;
-				link.download = filename;
-				document.body.appendChild(link);
-				link.click();
-				document.body.removeChild(link);
-				URL.revokeObjectURL(url);
-				showError('Native sharing not supported on this browser. Image downloaded instead.');
-			}
-		} catch (error) {
-			if (error.name === 'AbortError') {
-				// User cancelled the share
-				console.log('Share cancelled by user');
-			} else {
-				console.error('Failed to share:', error);
-				showError('Failed to share. Please try downloading PNG instead.');
-			}
-		}
-	});
-
-	const twitterBtn = modal.querySelector('[data-action="twitter"]');
-	twitterBtn.addEventListener("click", () => {
-		const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(appUrl)}`;
-		window.open(twitterUrl, "_blank", "width=550,height=420");
-		trackEvent("visualization-shared-twitter", { visualization: vizType });
-	});
-
-	const facebookBtn = modal.querySelector('[data-action="facebook"]');
-	facebookBtn.addEventListener("click", () => {
-		const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(appUrl)}&quote=${encodeURIComponent(shareText)}`;
-		window.open(facebookUrl, "_blank", "width=550,height=420");
-		trackEvent("visualization-shared-facebook", { visualization: vizType });
-	});
 }
 
 /**
@@ -899,11 +482,11 @@ function handlePrepareDownload() {
 	const url = urlInput.value.trim();
 
 	if (!url) {
-		showError("Please enter a datasport.pl URL");
+		showError("Please enter a datasport.pl URL", errorMessage);
 		return;
 	}
 
-	hideError();
+	hideError(errorMessage);
 
 	try {
 		const jsonUrl = getJsonUrl(url);
@@ -926,7 +509,7 @@ function handlePrepareDownload() {
 		});
 	} catch (error) {
 		console.error("Failed to construct JSON URL:", error);
-		showError(error.message || "Invalid URL format");
+		showError(error.message || "Invalid URL format", errorMessage);
 	}
 }
 
@@ -938,12 +521,12 @@ async function handleFileUpload(file) {
 	if (!file) return;
 
 	if (!file.name.endsWith(".json")) {
-		showError("Please upload a JSON file");
+		showError("Please upload a JSON file", errorMessage);
 		return;
 	}
 
 	try {
-		hideError();
+		hideError(errorMessage);
 
 		const text = await file.text();
 		const data = JSON.parse(text);
@@ -991,6 +574,7 @@ async function handleFileUpload(file) {
 		showError(
 			error.message ||
 				"Failed to process the uploaded file. Please ensure it's a valid JSON file.",
+			errorMessage,
 		);
 		fileInfo.style.display = "none";
 	}
@@ -1023,48 +607,6 @@ async function loadStoredResults() {
 }
 
 /**
- * Create HTML for a result card
- * @param {Object} result - Result metadata
- * @returns {string} HTML string
- */
-function createResultCard(result) {
-	const date = new Date(result.uploadDate).toLocaleString();
-	const hasUrl = result.sourceUrl?.trim();
-
-	return `
-		<div class="result-card" data-id="${result.id}">
-			<div class="result-card-header">
-				<div class="result-name" contenteditable="true" data-id="${result.id}" spellcheck="false">${result.name}</div>
-				<button class="delete-btn" data-id="${result.id}" title="Delete">×</button>
-			</div>
-			<div class="result-meta">
-				<div class="result-meta-item">
-					<span>📊 ${result.recordCount} records</span>
-				</div>
-				<div class="result-meta-item">
-					<span>💾 ${formatSize(result.size)}</span>
-				</div>
-				<div class="result-meta-item">
-					<span>📅 ${date}</span>
-				</div>
-				<div class="result-meta-item result-url">
-					${
-						hasUrl
-							? `
-						<a href="${result.sourceUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open datasport page">🔗 View online</a>
-					`
-							: `
-						<span class="no-url">No URL</span>
-					`
-					}
-					<button class="edit-url-btn" data-id="${result.id}" title="${hasUrl ? "Edit URL" : "Add URL"}">✏️</button>
-				</div>
-			</div>
-		</div>
-	`;
-}
-
-/**
  * Update storage usage display
  */
 async function updateStorageInfo() {
@@ -1086,7 +628,7 @@ async function updateStorageInfo() {
  */
 async function handleStoredResultClick(id, savedState = null) {
 	try {
-		hideError();
+		hideError(errorMessage);
 
 		const result = await getResult(id);
 		if (!result || !result.data) {
@@ -1124,7 +666,10 @@ async function handleStoredResultClick(id, savedState = null) {
 		console.log(`Analyzed stored result: ${result.name}`);
 	} catch (error) {
 		console.error("Failed to load stored result:", error);
-		showError("Failed to load stored result. It may have been deleted.");
+		showError(
+			"Failed to load stored result. It may have been deleted.",
+			errorMessage,
+		);
 	}
 }
 
@@ -1150,7 +695,7 @@ async function handleDeleteResult(id) {
 		console.log(`Deleted result ID: ${id}`);
 	} catch (error) {
 		console.error("Failed to delete result:", error);
-		showError("Failed to delete result.");
+		showError("Failed to delete result.", errorMessage);
 	}
 }
 
@@ -1170,7 +715,7 @@ async function handleRenameResult(id, newName) {
 		console.log(`Renamed result ID ${id} to: ${newName}`);
 	} catch (error) {
 		console.error("Failed to rename result:", error);
-		showError("Failed to rename result.");
+		showError("Failed to rename result.", errorMessage);
 		await loadStoredResults();
 	}
 }
@@ -1201,7 +746,7 @@ async function handleEditUrl(id) {
 		console.log(`Updated URL for result ID ${id}`);
 	} catch (error) {
 		console.error("Failed to update URL:", error);
-		showError("Failed to update URL.");
+		showError("Failed to update URL.", errorMessage);
 	}
 }
 
@@ -1229,7 +774,7 @@ async function handleClearAll() {
 		console.log("Cleared all stored results");
 	} catch (error) {
 		console.error("Failed to clear all results:", error);
-		showError("Failed to clear all results.");
+		showError("Failed to clear all results.", errorMessage);
 	}
 }
 
@@ -1264,23 +809,10 @@ async function init() {
 			const vizType = e.target.dataset.viz;
 			const svgContent = generatedSvgs[vizType];
 			if (svgContent) {
-				try {
-					const raceName = filtersHeaderText.textContent || "race-results";
-					const filename = `${raceName.replace(/\s+/g, "-")}-${vizType}.png`;
-					const pngBlob = await svgToPng(svgContent, 1200, 600);
-					const url = URL.createObjectURL(pngBlob);
-					const link = document.createElement('a');
-					link.href = url;
-					link.download = filename;
-					document.body.appendChild(link);
-					link.click();
-					document.body.removeChild(link);
-					URL.revokeObjectURL(url);
-					trackEvent('visualization-downloaded-png', { visualization: vizType });
-				} catch (error) {
-					console.error('Failed to download PNG:', error);
-					showError('Failed to download PNG. Please try downloading SVG instead.');
-				}
+				const raceName = filtersHeaderText.textContent || "race-results";
+				await downloadAsPng(svgContent, raceName, vizType, trackEvent, (msg) =>
+					showError(msg, errorMessage),
+				);
 			}
 		});
 	});
@@ -1364,7 +896,13 @@ async function init() {
 	// Add runner button click
 	addRunnerBtn.addEventListener("click", () => {
 		trackEvent("filter-runner-input-added");
-		runnerSelectorsContainer.appendChild(createRunnerSelector());
+		runnerSelectorsContainer.appendChild(
+			createRunnerSelector(
+				availableRunners,
+				regenerateVisualizations,
+				trackEvent,
+			),
+		);
 		updateAddButtonVisibility();
 	});
 

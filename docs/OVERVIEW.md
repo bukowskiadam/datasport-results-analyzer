@@ -256,6 +256,90 @@ Each visualization provides unique insights into race performance:
 - No bundler required
 - Direct ES module loading
 
+## Code Architecture
+
+### Modular Component Structure
+
+The application follows a clean component-based architecture using vanilla JavaScript modules:
+
+```
+src/
+├── app.js                     # Main application controller
+├── components/                # Reusable UI components
+│   ├── messages.js           # User feedback messages
+│   ├── result-card.js        # Result card generation
+│   ├── runner-selector.js    # Searchable runner selector
+│   └── share-modal.js        # Sharing and export
+├── datasport-fetcher.js      # Data fetching
+├── storage.js                # IndexedDB operations
+├── utils.js                  # Helper functions
+├── visualizations.js         # Viz exports
+└── viz-*.js                  # SVG generators
+```
+
+### Component Design Principles
+
+**1. Separation of Concerns**
+- UI components isolated from business logic
+- Each module has a single, clear responsibility
+- No circular dependencies
+
+**2. Dependency Injection**
+```javascript
+// Components receive dependencies as parameters
+showError(message, errorElement);
+createRunnerSelector(data, onChangeCallback, trackEvent);
+```
+
+**3. Pure Functions & Callbacks**
+```javascript
+// Pure function: input → output
+const html = createResultCard(result);
+
+// Callbacks for side effects
+const selector = createRunnerSelector(
+  runners,
+  () => regenerateVisualizations(),
+  trackEvent
+);
+```
+
+**4. Named Exports Only**
+```javascript
+// ✅ Always use named exports
+export function createRunnerSelector() { }
+export function getSelectedRunners() { }
+
+// ❌ Never use default exports
+export default function() { }
+```
+
+### Key Components
+
+**messages.js** - User feedback
+- `showError(message, element)` - Display errors with auto-hide
+- `hideError(element)` - Manually hide errors
+
+**result-card.js** - Result display
+- `createResultCard(result)` - Generate result card HTML
+
+**runner-selector.js** - Runner selection
+- `createRunnerSelector(runners, onChange, trackEvent, selected)` - Create selector
+- `getSelectedRunners(container)` - Get selected indices
+- `prepareRunnersList(data)` - Prepare runner data
+
+**share-modal.js** - Sharing functionality
+- `showShareModal(svg, name, race, type, trackEvent, showError)` - Display modal
+- `downloadAsPng(svg, name, type, trackEvent, showError)` - Export PNG
+
+### Benefits of This Architecture
+
+✅ **Maintainable** - Clear file structure, easy to find code  
+✅ **Testable** - Pure functions, dependency injection  
+✅ **Reusable** - Components work independently  
+✅ **Readable** - Small focused modules  
+✅ **No Framework** - Zero dependencies, no build step
+
 ## Browser Requirements
 
 ### Minimum Versions
