@@ -120,9 +120,11 @@ Showing 2,156 results
 #### Selection Interface
 - **Searchable input fields**: Each field allows typing to search for runners with autocomplete
 - **Real-time filtering**: Results appear as you type, showing up to 50 matching runners
-- **Search by**: Runner name, age category, or bib number
-- **Format**: "Last Name First Name (Age Category) #Bib"
-- **Example**: "Kowalski Jan (M40) #42"
+- **Search by**: Runner name, age category, distance, or bib number
+- **Format (single distance)**: "Last Name First Name (Age Category) #Bib"
+- **Format (multi-distance)**: "Last Name First Name (Age Category Distance) #Bib"
+- **Example (single distance)**: "Kowalski Jan (M40) #42"
+- **Example (multi-distance)**: "Kowalski Jan (M40 42.19km) #42"
 - **Keyboard navigation**: Use arrow keys to navigate results, Enter to select, Escape to close
 - **Add runners**: Click the "+ Add Runner" button to add more search fields (up to 10)
 - **Remove runners**: Click the "×" button next to any field to remove it
@@ -142,6 +144,7 @@ Showing 2,156 results
 **Search Tips:**
 - Type any part of the runner's name (first or last)
 - Search by bib number for quick access
+- In multi-distance races, you can search by distance (e.g., "42" for marathon)
 - Results update as you type (shows top 50 matches)
 - Use arrow keys to navigate, Enter to select
 - Works great on mobile with virtual keyboard
@@ -237,6 +240,8 @@ Runner 2 ← ● or ● → Runner 2
 - Runner list generated from full dataset (not filtered)
 - Searchable autocomplete with real-time filtering
 - Shows up to 50 matching results for performance
+- **Distance display**: Automatically shown when race has multiple distances
+- Distance format: Converted from meters to kilometers (e.g., "42.19km")
 - Index-based selection (maintains reference even after filtering)
 - Survives distance filter changes
 - Saved in session state (restored on page reload)

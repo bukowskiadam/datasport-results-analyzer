@@ -240,27 +240,53 @@ export function getSelectedRunners(container) {
  * @returns {Array} Sorted list of runners with display names
  */
 export function prepareRunnersList(data) {
+	// Check if there are multiple distances in the dataset
+	const uniqueDistances = new Set(
+		data.map((entry) => entry.odleglosc).filter(Boolean),
+	);
+	const hasMultipleDistances = uniqueDistances.size > 1;
+
 	return data
 		.map((entry, index) => {
 			const name = `${entry.nazwisko || ""} ${entry.imie || ""}`.trim();
 			const bib = entry.numer || "";
 			const category = entry.katw || "";
+			const distance = entry.odleglosc || "";
 
-			// Build display name: Name (Category) #Bib or Name (Category) or Name #Bib or Name
-			let displayName = name;
-			if (category && bib) {
-				displayName = `${name} (${category}) #${bib}`;
-			} else if (category) {
-				displayName = `${name} (${category})`;
-			} else if (bib) {
-				displayName = `${name} #${bib}`;
+			// Format distance for display (convert meters to km)
+			let formattedDistance = "";
+			if (distance && hasMultipleDistances) {
+				const meters = parseFloat(distance);
+				if (!Number.isNaN(meters)) {
+					const km = meters / 1000;
+					formattedDistance = `${km.toFixed(2)}km`;
+				}
 			}
+
+			// Build display name based on available data
+			// Format: Name (Category) Distance #Bib
+			const parts = [name];
+
+			if (category) {
+				parts.push(`(${category})`);
+			}
+
+			if (formattedDistance) {
+				parts.push(formattedDistance);
+			}
+
+			if (bib) {
+				parts.push(`#${bib}`);
+			}
+
+            const displayName = parts.join(" ");
 
 			return {
 				index,
 				name,
 				bib,
 				category,
+				distance,
 				displayName,
 				entry,
 			};

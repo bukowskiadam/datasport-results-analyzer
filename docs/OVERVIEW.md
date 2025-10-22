@@ -93,6 +93,7 @@ Each visualization provides unique insights into race performance:
 - **Distance filter** for multi-distance events
 - **Bucket size control** (15s, 30s, 60s, 120s)
 - **Runner highlighting** across all visualizations (up to 10 runners)
+- **Smart runner labels** - automatically shows distance in multi-distance races
 - **Real-time updates** with instant regeneration
 
 **Quick Links:**
