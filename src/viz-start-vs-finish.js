@@ -233,7 +233,7 @@ export function generateStartVsFinishSvg(records, selectedRunners = []) {
   <!-- Highlighted runner ${i + 1} arrow -->
   <line x1="${arrowStartX}" y1="${arrowStartY}" x2="${arrowEndX}" y2="${arrowEndY}" 
         stroke="${color}" stroke-width="2" marker-end="url(#${markerId})" />
-  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="16" font-weight="bold" fill="${color}">${selectedPoint.name}</text>
+  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="${color}">${selectedPoint.name}</text>
   <!-- Highlighted runner ${i + 1} dot -->
   <circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="6" fill="${color}" opacity="1.0" stroke="#ffffff" stroke-width="2">
     <title>${selectedPoint.label}</title>
@@ -265,7 +265,7 @@ export function generateStartVsFinishSvg(records, selectedRunners = []) {
 				`<line x1="${x.toFixed(2)}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${x.toFixed(2)}" y2="${SVG_HEIGHT - PADDING_BOTTOM + 6}" stroke="#333333" stroke-width="1" />`,
 			);
 			xTickElements.push(
-				`<text x="${x.toFixed(2)}" y="${SVG_HEIGHT - PADDING_BOTTOM + 22}" text-anchor="middle" font-size="12" fill="#333333">${minutesToLabel(minute)}</text>`,
+				`<text x="${x.toFixed(2)}" y="${SVG_HEIGHT - PADDING_BOTTOM + 22}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#333333">${minutesToLabel(minute)}</text>`,
 			);
 		}
 	}
@@ -295,7 +295,7 @@ export function generateStartVsFinishSvg(records, selectedRunners = []) {
 			// Format label based on range
 			const label = useMinuteFormat ? `+${minute}` : `+${minutesToLabel(minute)}`;
 			yTickElements.push(
-				`<text x="${PADDING_LEFT - 10}" y="${y.toFixed(2)}" text-anchor="end" alignment-baseline="middle" font-size="12" fill="#333333">${label}</text>`,
+				`<text x="${PADDING_LEFT - 10}" y="${y.toFixed(2)}" text-anchor="end" alignment-baseline="middle" font-family="Arial, sans-serif" font-size="12" fill="#333333">${label}</text>`,
 			);
 		}
 	}
@@ -357,8 +357,8 @@ export function generateStartVsFinishSvg(records, selectedRunners = []) {
   
   <!-- Data points -->
   ${plotted}
-  <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Net finish time</text>
-  <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">${yAxisLabel}</text>
+  <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333333">Net finish time</text>
+  <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">${yAxisLabel}</text>
   ${attribution}
 </svg>`;
 }

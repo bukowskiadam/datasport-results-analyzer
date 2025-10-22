@@ -58,39 +58,39 @@ Showing 2,156 results
 
 #### Available Options
 
-**60 seconds (1 minute)**
-- Highest detail
+**15 seconds**
+- Very high detail
 - Many narrow bars
-- Best for: Small races (<500 runners)
-- Best for: Detailed time distribution analysis
-- Example: Shows distinct spikes at popular finish times
+- Best for: Very small races (<200 runners)
+- Best for: Extremely detailed time distribution analysis
+- Example: Shows precise finish time patterns
 
-**120 seconds (2 minutes)** - DEFAULT
+**30 seconds**
+- High detail
+- Clear narrow bars
+- Best for: Small races (200-500 runners)
+- Best for: Detailed time distribution analysis
+
+**60 seconds (1 minute)** - DEFAULT
 - Balanced detail and overview
 - Recommended for most races
 - Best for: Medium races (500-2,000 runners)
 - Best for: General distribution patterns
 
-**300 seconds (5 minutes)**
+**120 seconds (2 minutes)**
 - Broader grouping
 - Clearer overall shape
 - Best for: Large races (2,000-5,000 runners)
 - Best for: High-level distribution view
 
-**600 seconds (10 minutes)**
-- Maximum grouping
-- Simplified distribution
-- Best for: Very large races (5,000+ runners)
-- Best for: Quick overview of finish spread
-
 #### Effect on Visualizations
 
 **Net Times Histogram:**
 ```
-60s:  Many bars, detailed peaks
-120s: Balanced, most patterns visible
-300s: Fewer bars, smooth distribution
-600s: Very few bars, general shape only
+15s:  Very many bars, extremely detailed peaks
+30s:  Many bars, detailed peaks
+60s:  Balanced, most patterns visible
+120s: Fewer bars, smooth distribution
 ```
 
 **Start Buckets Histogram:**
@@ -123,6 +123,7 @@ Showing 2,156 results
 - **Example**: "Kowalski Jan (M40) #42"
 - **Add runners**: Click the "+ Add Runner" button to add more selection dropdowns (up to 10)
 - **Remove runners**: Click the "×" button next to any dropdown to remove it
+- **Share button**: A green "Share" button appears next to each selected runner
 - **Multiple runners**: Each runner gets a different color for easy identification
 - **Default state**: One empty dropdown appears when data is loaded
 
@@ -131,8 +132,11 @@ Showing 2,156 results
 2. **Add more runners**: Click the "+ Add Runner" button to add another dropdown
 3. **Select additional runners**: Use the new dropdowns that appear
 4. **Remove a runner**: Click the "×" button next to their dropdown to remove it
-5. **View comparison**: All selected runners appear highlighted across all visualizations
-6. **Limit**: Maximum of 10 runners can be selected (button hides when limit reached)
+5. **Share runner**: Click the green "Share" button next to a selected runner to share their performance
+6. **View comparison**: All selected runners appear highlighted across all visualizations
+7. **Limit**: Maximum of 10 runners can be selected (button hides when limit reached)
+
+**Note**: The Share button appears only when a runner is selected from that dropdown.
 
 #### Color Scheme for Multiple Runners
 When multiple runners are selected, they are highlighted with different colors:
@@ -401,9 +405,9 @@ const filtered = data.filter(r => r.odleglosc === selectedDistance);
 ### Pacing Analysis
 
 **Using Bucket Size Variation:**
-1. Start with 60s buckets for detail
+1. Start with 30s or 60s buckets for detail
 2. Find the peak (most common finish time)
-3. Switch to 300s for overall shape
+3. Switch to 120s for overall shape
 4. Look for:
    - Single peak = evenly paced field
    - Multiple peaks = distinct runner groups
@@ -468,7 +472,7 @@ const filtered = data.filter(r => r.odleglosc === selectedDistance);
 
 ### For Performance:
 - Filter to single distance early (reduces data size)
-- Use larger buckets for large races
+- Use 60s or 120s buckets for large races (avoid 15s/30s)
 - Collapse filter panel when not in use
 - Don't rapidly change filters (give time to render)
 

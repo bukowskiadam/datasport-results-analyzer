@@ -95,6 +95,20 @@ export function formatDistance(distanceStr) {
 }
 
 /**
+ * Format time string for display (removes milliseconds)
+ * @param {string} timeStr - Time string (format: "HH:MM:SS,mmm" or "HH:MM:SS")
+ * @returns {string} Formatted time string (HH:MM:SS)
+ */
+export function formatTime(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') {
+    return 'N/A';
+  }
+  // Remove milliseconds if present (after comma)
+  const withoutMs = timeStr.split(',')[0];
+  return withoutMs.trim();
+}
+
+/**
  * Parse net time string (format: "HH:MM:SS,mmm") to seconds
  * @param {string} value - Time string to parse
  * @returns {number|null} Time in seconds or null if invalid
@@ -250,7 +264,7 @@ export function generateWatermark(width, height) {
       const x = col * stepX;
       const y = row * stepY;
       watermarks.push(
-        `<text x="${x}" y="${y}" text-anchor="middle" font-size="24" fill="#000000" opacity="0.03" font-weight="normal" transform="rotate(-15 ${x} ${y})">${url}</text>`
+        `<text x="${x}" y="${y}" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#000000" opacity="0.03" font-weight="normal" transform="rotate(-15 ${x} ${y})">${url}</text>`
       );
     }
   }
@@ -270,7 +284,7 @@ export function generateAttribution(width, height) {
   const x = width - 10;
   
   return `<a href="${url}" target="_blank">
-    <text x="${x}" y="${y}" text-anchor="end" font-size="10" fill="#666666">Created with ${url}</text>
+    <text x="${x}" y="${y}" text-anchor="end" font-family="Arial, sans-serif" font-size="10" fill="#666666">Created with ${url}</text>
   </a>`;
 }
 

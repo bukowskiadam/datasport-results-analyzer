@@ -192,7 +192,7 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60, selecte
 			`<line x1="${x.toFixed(2)}" y1="${SVG_HEIGHT - PADDING_BOTTOM}" x2="${x.toFixed(2)}" y2="${SVG_HEIGHT - PADDING_BOTTOM + 6}" stroke="#333333" stroke-width="1" />`,
 		);
 		tickElements.push(
-			`<text x="${x.toFixed(2)}" y="${SVG_HEIGHT - PADDING_BOTTOM + 22}" text-anchor="middle" font-size="12" fill="#333333">${minutesToLabel(minute)}</text>`,
+			`<text x="${x.toFixed(2)}" y="${SVG_HEIGHT - PADDING_BOTTOM + 22}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#333333">${minutesToLabel(minute)}</text>`,
 		);
 	}
 
@@ -205,7 +205,7 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60, selecte
 			`<line x1="${PADDING_LEFT - 6}" y1="${y.toFixed(2)}" x2="${PADDING_LEFT}" y2="${y.toFixed(2)}" stroke="#333333" stroke-width="1" />`,
 		);
 		yTickElements.push(
-			`<text x="${PADDING_LEFT - 10}" y="${y.toFixed(2)}" text-anchor="end" alignment-baseline="middle" font-size="12" fill="#333333">${Math.round(value)}</text>`,
+			`<text x="${PADDING_LEFT - 10}" y="${y.toFixed(2)}" text-anchor="end" alignment-baseline="middle" font-family="Arial, sans-serif" font-size="12" fill="#333333">${Math.round(value)}</text>`,
 		);
 	}
 
@@ -366,7 +366,7 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60, selecte
   <!-- Highlighted runner ${i + 1} arrow -->
   <line x1="${arrowStartX}" y1="${arrowStartY}" x2="${arrowEndX}" y2="${arrowEndY}" 
         stroke="${color}" stroke-width="2" marker-end="url(#${markerId})" />
-  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="16" font-weight="bold" fill="${color}">${runnerName}</text>
+  <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="${color}">${runnerName}</text>
   <!-- Highlighted runner ${i + 1} dot -->
   <circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="6" fill="${color}" opacity="1.0" stroke="#ffffff" stroke-width="2">
     <title>${runnerName} - Finish: ${minutesToLabel(selectedRunnerData.finishMinute)}</title>
@@ -393,14 +393,14 @@ export function generateStartBucketsSvg(records, bucketSizeSeconds = 60, selecte
   ${yTickElements.join("\n  ")}
   ${columns}
   ${highlightElements}
-  <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-size="14" fill="#333333">Net finish time (${bucketLabel}, labels every 10 min)</text>
-  <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">Number of finishers</text>
+  <text x="${SVG_WIDTH / 2}" y="${SVG_HEIGHT - 20}" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333333">Net finish time (${bucketLabel}, labels every 10 min)</text>
+  <text x="${PADDING_LEFT - 50}" y="${SVG_HEIGHT / 2}" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333333" transform="rotate(-90 ${PADDING_LEFT - 50} ${SVG_HEIGHT / 2})">Number of finishers</text>
   <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="12" fill="url(#startGradient)" />
-  <text x="${legendX}" y="${legendY - 6}" text-anchor="start" font-size="12" fill="#333333">Earlier start</text>
-  <text x="${legendX + legendWidth}" y="${legendY - 6}" text-anchor="end" font-size="12" fill="#333333">Later start</text>
-  <text x="${legendX}" y="${legendY + 24}" text-anchor="start" font-size="10" fill="#666666">${startLabel0}</text>
-  <text x="${legendX + legendWidth / 2}" y="${legendY + 24}" text-anchor="middle" font-size="10" fill="#666666">${startLabelMid}</text>
-  <text x="${legendX + legendWidth}" y="${legendY + 24}" text-anchor="end" font-size="10" fill="#666666">${startLabelEnd}</text>
+  <text x="${legendX}" y="${legendY - 6}" text-anchor="start" font-family="Arial, sans-serif" font-size="12" fill="#333333">Earlier start</text>
+  <text x="${legendX + legendWidth}" y="${legendY - 6}" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#333333">Later start</text>
+  <text x="${legendX}" y="${legendY + 24}" text-anchor="start" font-family="Arial, sans-serif" font-size="10" fill="#666666">${startLabel0}</text>
+  <text x="${legendX + legendWidth / 2}" y="${legendY + 24}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666666">${startLabelMid}</text>
+  <text x="${legendX + legendWidth}" y="${legendY + 24}" text-anchor="end" font-family="Arial, sans-serif" font-size="10" fill="#666666">${startLabelEnd}</text>
   ${generateAttribution(SVG_WIDTH, SVG_HEIGHT)}
 </svg>`;
 }

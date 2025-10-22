@@ -9,9 +9,10 @@ The datasport-results-analyzer is a comprehensive web-based tool for analyzing a
 1. **Load Data**: Enter a datasport.pl URL and download the JSON file
 2. **Upload**: Drag and drop the file into the upload zone
 3. **Analyze**: View four different visualizations instantly
-4. **Filter**: Apply distance, bucket size, and runner filters
-5. **Download**: Save SVG visualizations for reports or presentations
-6. **Store**: Results automatically saved for future access
+4. **Share**: Download SVGs or share visualizations via social media
+5. **Filter**: Apply distance, bucket size, and runner filters
+6. **Download**: Save SVG visualizations for reports or presentations
+7. **Store**: Results automatically saved for future access
 
 ## Core Features
 
@@ -55,8 +56,9 @@ The datasport-results-analyzer is a comprehensive web-based tool for analyzing a
 - [What's Remembered](MEMORY_FEATURE.md#whats-remembered)
 - [How It Works](MEMORY_FEATURE.md#how-it-works)
 
-### 4. Four Visualization Types
+### 4. Visualization Types
 📖 **[Detailed Documentation](VISUALIZATIONS.md)**
+
 
 Each visualization provides unique insights into race performance:
 
@@ -89,8 +91,8 @@ Each visualization provides unique insights into race performance:
 📖 **[Detailed Documentation](FILTERING.md)**
 
 - **Distance filter** for multi-distance events
-- **Bucket size control** (60s, 120s, 300s, 600s)
-- **Runner highlighting** across all visualizations
+- **Bucket size control** (15s, 30s, 60s, 120s)
+- **Runner highlighting** across all visualizations (up to 10 runners)
 - **Real-time updates** with instant regeneration
 
 **Quick Links:**
@@ -99,10 +101,12 @@ Each visualization provides unique insights into race performance:
 - [Runner Selection](FILTERING.md#3-runner-selection-filter)
 - [Filter Interactions](FILTERING.md#filter-interactions)
 
-### 6. SVG Export
+### 6. SVG Export & Sharing
 📖 **[Detailed Documentation](VISUALIZATIONS.md#downloading-visualizations)**
 
 - **Scalable vector graphics** for quality output
+- **PNG export** option for easy sharing
+- **Share buttons** with social media integration
 - **Individual download buttons** for each visualization
 - **Web and print ready** formats
 - **Editable** in graphics software
@@ -157,10 +161,12 @@ Each visualization provides unique insights into race performance:
 - Edit URL button (✏️)
 - Delete button (×)
 
+
 **Filters Panel**
 - Collapsible header (click to toggle)
 - Three filter controls
 - Info text showing current selection
+- Remove button (×) next to each runner selector
 
 **Visualization Containers**
 - SVG display area
@@ -187,8 +193,9 @@ Each visualization provides unique insights into race performance:
    - Select your name from dropdown
    - See your position across all graphs
    
-5. **Download Results**
-   - Click download for relevant graphs
+5. **Share or Download Results**
+   - Click share button to post on social media
+   - Or click download for relevant graphs
    - Save for reports or sharing
 
 ### Comparing Multiple Races
@@ -220,7 +227,7 @@ Each visualization provides unique insights into race performance:
 2. **For Each Team Member**
    - Select member from dropdown
    - Note their finish position
-   - Download visualization
+   - Download or share visualization
    
 3. **Create Report**
    - Collect all downloaded SVGs
@@ -422,6 +429,6 @@ See project repository for license information.
 
 ---
 
-**Last Updated**: October 2025  
+**Last Updated**: October 22, 2025  
 **App Version**: 1.0  
 **Documentation Version**: 1.0

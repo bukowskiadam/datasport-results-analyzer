@@ -51,14 +51,14 @@ Groups finishers into time buckets and displays the count in each bucket. Shows 
 - **Runner highlighting**: Selected runner's bucket marked with arrow
 
 #### Bucket Size Options
-- **60 seconds (1 minute)**: High detail, many bars
-  - Best for: Small races (<500 runners) or detailed analysis
-- **120 seconds (2 minutes)**: Balanced detail
+- **15 seconds**: Very high detail, many bars
+  - Best for: Very small races (<200 runners) or extremely detailed analysis
+- **30 seconds**: High detail, many bars
+  - Best for: Small races (200-500 runners) or detailed analysis
+- **60 seconds (1 minute)**: Balanced detail (DEFAULT)
   - Best for: Medium races (500-2000 runners)
-- **300 seconds (5 minutes)**: Broader view
+- **120 seconds (2 minutes)**: Broader view
   - Best for: Large races (2000-5000 runners)
-- **600 seconds (10 minutes)**: High-level overview
-  - Best for: Very large races (5000+ runners)
 
 #### Use Cases
 - Find the most common finish time
@@ -149,6 +149,8 @@ Plots each runner's net finish time against their relative start time. Helps ide
 - Opacity: 0.6 (to see overlapping points)
 - Relative start times calculated from earliest starter (T₀)
 
+
+
 ---
 
 ## Common Features
@@ -207,10 +209,10 @@ When a runner is selected from the dropdown:
 
 ### Bucket Size Filter
 Affects histograms (Net Times and Start Buckets):
-- **60 seconds**: Highest detail
-- **120 seconds**: Good balance (default)
-- **300 seconds**: Broader overview
-- **600 seconds**: Widest buckets
+- **15 seconds**: Very high detail
+- **30 seconds**: High detail
+- **60 seconds**: Good balance (default)
+- **120 seconds**: Broader overview
 
 ### Runner Selection
 - Dropdown lists all runners alphabetically
@@ -223,19 +225,45 @@ Affects histograms (Net Times and Start Buckets):
 
 ---
 
-## Downloading Visualizations
+### Downloading Visualizations
+
+Each visualization has three action buttons below it:
+- **"Download SVG"** button - Downloads as standalone SVG file
+- **"Download PNG"** button - Downloads as PNG image (2x resolution for quality)
+- **"Share"** button - Opens a share modal with multiple options
 
 ### Download Buttons
 Each visualization has a download button below it:
-- **"Download SVG"** button
-- Downloads as standalone SVG file
+- **"Download SVG"** button - Downloads as scalable vector graphics
+- **"Download PNG"** button - Downloads as PNG image (2x resolution for quality)
 - Default filenames:
-  - `netto-times.svg`
-  - `histogram.svg`
-  - `start-buckets.svg`
-  - `start-vs-finish.svg`
+  - `netto-times.svg` / `netto-times.png`
+  - `histogram.svg` / `histogram.png`
+  - `start-buckets.svg` / `start-buckets.png`
+  - `start-vs-finish.svg` / `start-vs-finish.png`
 
-### SVG File Benefits
+### Share Buttons
+
+Each visualization also has a **"Share"** button that opens a modal with options:
+
+#### Share Modal Features
+- **Live preview**: Shows the visualization you're about to share
+- **Multiple share options**:
+  - **Share via...** - Uses native device sharing (mobile) or downloads PNG (desktop)
+  - **Share on X (Twitter)** - Opens pre-filled tweet
+  - **Share on Facebook** - Opens Facebook share dialog
+- **Pre-filled text**: Includes visualization name and race name
+- **App attribution**: Shares link to datasport-results-analyzer
+
+#### How It Works
+1. Click the **"Share"** button below any visualization
+2. Modal opens with preview and share options
+3. Choose your sharing method:
+   - **Mobile**: "Share via..." uses native OS share sheet
+   - **Desktop**: "Share via..." downloads PNG, or use X/Facebook buttons
+4. The image is converted to PNG (1200×600 at 2x resolution) for best quality
+
+### SVG Download Benefits
 - **Scalable**: Can be resized without quality loss
 - **Editable**: Open in vector graphics software (Inkscape, Illustrator, etc.)
 - **Web-ready**: Can be embedded in websites

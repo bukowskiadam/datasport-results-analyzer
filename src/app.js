@@ -25,16 +25,19 @@ import {
 // Umami event tracking helper
 function trackEvent(eventName, eventData = {}) {
 	// Skip tracking on localhost/development
-	if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-		console.log('[Dev] Skipping event:', eventName, eventData);
+	if (
+		window.location.hostname === "localhost" ||
+		window.location.hostname === "127.0.0.1"
+	) {
+		console.log("[Dev] Skipping event:", eventName, eventData);
 		return;
 	}
-	
+
 	if (window.umami) {
 		try {
 			window.umami.track(eventName, eventData);
 		} catch (error) {
-			console.warn('Failed to track event:', eventName, error);
+			console.warn("Failed to track event:", eventName, error);
 		}
 	}
 }
@@ -66,7 +69,9 @@ const filtersSection = document.getElementById("filters-section");
 const distanceSelect = document.getElementById("distance-select");
 const distanceInfo = document.getElementById("distance-info");
 const bucketSizeSelect = document.getElementById("bucket-size-select");
-const runnerSelectorsContainer = document.getElementById("runner-selectors-container");
+const runnerSelectorsContainer = document.getElementById(
+	"runner-selectors-container",
+);
 const addRunnerBtn = document.getElementById("add-runner-btn");
 const filtersHeader = document.getElementById("filters-header");
 const filtersHeaderText = document.getElementById("filters-header-text");
@@ -95,21 +100,21 @@ let availableDistances = [];
 let currentResultId = null;
 
 // Memory key for localStorage
-const MEMORY_KEY = 'datasport-analyzer-session';
+const MEMORY_KEY = "datasport-analyzer-session";
 
 /**
  * Save current session state to localStorage and result-specific state to IndexedDB
  */
 function saveSessionState() {
 	if (!currentResultId) return;
-	
+
 	try {
 		const filterState = {
 			distance: distanceSelect.value,
 			bucketSize: bucketSizeSelect.value,
 			runners: getSelectedRunners(),
 		};
-		
+
 		// Save to localStorage for page refresh
 		const sessionState = {
 			resultId: currentResultId,
@@ -117,13 +122,13 @@ function saveSessionState() {
 			timestamp: Date.now(),
 		};
 		localStorage.setItem(MEMORY_KEY, JSON.stringify(sessionState));
-		
+
 		// Save filter state to the result in IndexedDB
-		updateResult(currentResultId, { filterState }).catch(error => {
-			console.error('Failed to save filter state to result:', error);
+		updateResult(currentResultId, { filterState }).catch((error) => {
+			console.error("Failed to save filter state to result:", error);
 		});
 	} catch (error) {
-		console.error('Failed to save session state:', error);
+		console.error("Failed to save session state:", error);
 	}
 }
 
@@ -135,11 +140,11 @@ function loadSessionState() {
 	try {
 		const stateJson = localStorage.getItem(MEMORY_KEY);
 		if (!stateJson) return null;
-		
+
 		const state = JSON.parse(stateJson);
 		return state;
 	} catch (error) {
-		console.error('Failed to load session state:', error);
+		console.error("Failed to load session state:", error);
 		return null;
 	}
 }
@@ -151,7 +156,7 @@ function clearSessionState() {
 	try {
 		localStorage.removeItem(MEMORY_KEY);
 	} catch (error) {
-		console.error('Failed to clear session state:', error);
+		console.error("Failed to clear session state:", error);
 	}
 }
 
@@ -191,10 +196,10 @@ let availableRunners = [];
  * @returns {Array<string>} Array of selected runner indices
  */
 function getSelectedRunners() {
-	const selects = runnerSelectorsContainer.querySelectorAll('.runner-selector');
+	const selects = runnerSelectorsContainer.querySelectorAll(".runner-selector");
 	return Array.from(selects)
-		.map(select => select.value)
-		.filter(value => value !== '');
+		.map((select) => select.value)
+		.filter((value) => value !== "");
 }
 
 /**
@@ -202,23 +207,23 @@ function getSelectedRunners() {
  * @param {string} [selectedValue] - Optional pre-selected runner index
  * @returns {HTMLElement} The selector row element
  */
-function createRunnerSelector(selectedValue = '') {
-	const row = document.createElement('div');
-	row.className = 'runner-selector-row';
-	
-	const select = document.createElement('select');
-	select.className = 'runner-selector';
-	select.setAttribute('aria-label', 'Runner selection');
-	
+function createRunnerSelector(selectedValue = "") {
+	const row = document.createElement("div");
+	row.className = "runner-selector-row";
+
+	const select = document.createElement("select");
+	select.className = "runner-selector";
+	select.setAttribute("aria-label", "Runner selection");
+
 	// Add empty option
-	const emptyOption = document.createElement('option');
-	emptyOption.value = '';
-	emptyOption.textContent = 'Select a runner...';
+	const emptyOption = document.createElement("option");
+	emptyOption.value = "";
+	emptyOption.textContent = "Select a runner...";
 	select.appendChild(emptyOption);
-	
+
 	// Add all runners
 	for (const runner of availableRunners) {
-		const option = document.createElement('option');
+		const option = document.createElement("option");
 		option.value = runner.index.toString();
 		option.textContent = runner.displayName;
 		if (runner.index.toString() === selectedValue) {
@@ -226,45 +231,71 @@ function createRunnerSelector(selectedValue = '') {
 		}
 		select.appendChild(option);
 	}
-	
+
 	// Add change listener
-	select.addEventListener('change', () => {
-		const isSelected = select.value !== '';
-		trackEvent(isSelected ? 'filter-runner-selected' : 'filter-runner-cleared');
+	select.addEventListener("change", () => {
+		const isSelected = select.value !== "";
+		trackEvent(isSelected ? "filter-runner-selected" : "filter-runner-cleared");
+		// Update share button visibility
+		shareBtn.style.display = isSelected ? "flex" : "none";
 		regenerateVisualizations();
 	});
-	
-	const removeBtn = document.createElement('button');
-	removeBtn.type = 'button';
-	removeBtn.className = 'remove-runner-btn';
-	removeBtn.title = 'Remove this runner';
+
+	const shareBtn = document.createElement("button");
+	shareBtn.type = "button";
+	shareBtn.className = "share-runner-btn";
+	shareBtn.title = "Share runner performance";
+	shareBtn.style.display = selectedValue ? "flex" : "none";
+	shareBtn.innerHTML = `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+			<circle cx="18" cy="5" r="3"></circle>
+			<circle cx="6" cy="12" r="3"></circle>
+			<circle cx="18" cy="19" r="3"></circle>
+			<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+			<line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+		</svg>
+		Share
+	`;
+
+	shareBtn.addEventListener("click", () => {
+		const runnerIndex = select.value;
+		if (runnerIndex && fullDataset) {
+			trackEvent("runner-share-clicked");
+			handleShareRunner(runnerIndex);
+		}
+	});
+
+	const removeBtn = document.createElement("button");
+	removeBtn.type = "button";
+	removeBtn.className = "remove-runner-btn";
+	removeBtn.title = "Remove this runner";
 	removeBtn.innerHTML = `
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
 			<line x1="18" y1="6" x2="6" y2="18"></line>
 			<line x1="6" y1="6" x2="18" y2="18"></line>
 		</svg>
 	`;
-	
-	removeBtn.addEventListener('click', () => {
-		trackEvent('filter-runner-removed');
+
+	removeBtn.addEventListener("click", () => {
+		trackEvent("filter-runner-removed");
 		row.remove();
 		regenerateVisualizations();
 		updateAddButtonVisibility();
 	});
 	
 	row.appendChild(select);
-	row.appendChild(removeBtn);
-	
-	return row;
+	row.appendChild(removeBtn);	return row;
 }
 
 /**
  * Update visibility of add button based on number of selectors
  */
 function updateAddButtonVisibility() {
-	const count = runnerSelectorsContainer.querySelectorAll('.runner-selector-row').length;
+	const count = runnerSelectorsContainer.querySelectorAll(
+		".runner-selector-row",
+	).length;
 	// Limit to 10 runners for performance
-	addRunnerBtn.style.display = count >= 10 ? 'none' : 'flex';
+	addRunnerBtn.style.display = count >= 10 ? "none" : "flex";
 }
 
 /**
@@ -279,7 +310,7 @@ function setupRunnerSelector(data, preselectedRunners = null) {
 			const name = `${entry.nazwisko || ""} ${entry.imie || ""}`.trim();
 			const bib = entry.numer || "";
 			const category = entry.katw || "";
-			
+
 			// Build display name: Name (Category) #Bib or Name (Category) or Name #Bib or Name
 			let displayName = name;
 			if (category && bib) {
@@ -289,7 +320,7 @@ function setupRunnerSelector(data, preselectedRunners = null) {
 			} else if (bib) {
 				displayName = `${name} #${bib}`;
 			}
-			
+
 			return {
 				index,
 				name,
@@ -301,14 +332,18 @@ function setupRunnerSelector(data, preselectedRunners = null) {
 		})
 		.filter((r) => r.name)
 		.sort((a, b) => a.name.localeCompare(b.name));
-	
+
 	// Clear existing selectors
-	runnerSelectorsContainer.innerHTML = '';
-	
+	runnerSelectorsContainer.innerHTML = "";
+
 	// Add preselected runners or one empty selector
-	if (preselectedRunners && Array.isArray(preselectedRunners) && preselectedRunners.length > 0) {
+	if (
+		preselectedRunners &&
+		Array.isArray(preselectedRunners) &&
+		preselectedRunners.length > 0
+	) {
 		for (const runnerIndex of preselectedRunners) {
-			if (availableRunners.some(r => r.index.toString() === runnerIndex)) {
+			if (availableRunners.some((r) => r.index.toString() === runnerIndex)) {
 				runnerSelectorsContainer.appendChild(createRunnerSelector(runnerIndex));
 			}
 		}
@@ -316,7 +351,7 @@ function setupRunnerSelector(data, preselectedRunners = null) {
 		// Add one empty selector by default
 		runnerSelectorsContainer.appendChild(createRunnerSelector());
 	}
-	
+
 	updateAddButtonVisibility();
 }
 
@@ -345,7 +380,10 @@ function setupDistanceFilter(data, preselectedDistance = null) {
 	if (availableDistances.length === 1) {
 		distanceSelect.value = availableDistances[0].value;
 		distanceSelect.disabled = true;
-	} else if (preselectedDistance && availableDistances.some(d => d.value === preselectedDistance)) {
+	} else if (
+		preselectedDistance &&
+		availableDistances.some((d) => d.value === preselectedDistance)
+	) {
 		// Restore preselected distance if valid
 		distanceSelect.value = preselectedDistance;
 		distanceSelect.disabled = false;
@@ -353,7 +391,7 @@ function setupDistanceFilter(data, preselectedDistance = null) {
 		distanceSelect.value = "";
 		distanceSelect.disabled = false;
 	}
-	
+
 	updateDistanceInfo(data);
 }
 
@@ -404,10 +442,10 @@ function generateVisualizations(data, savedState = null) {
 		if (savedState?.bucketSize) {
 			bucketSizeSelect.value = savedState.bucketSize;
 		}
-		
+
 		// Setup distance filter with full dataset
 		setupDistanceFilter(data, savedState?.distance);
-		
+
 		// Setup runner selector
 		setupRunnerSelector(data, savedState?.runners);
 
@@ -415,8 +453,8 @@ function generateVisualizations(data, savedState = null) {
 		const filteredData = getFilteredData();
 		const bucketSize = Number.parseInt(bucketSizeSelect.value, 10);
 		const selectedRunners = getSelectedRunners()
-			.map(indexStr => Number.parseInt(indexStr, 10))
-			.map(index => data[index])
+			.map((indexStr) => Number.parseInt(indexStr, 10))
+			.map((index) => data[index])
 			.filter(Boolean);
 
 		// Generate net times visualization
@@ -425,22 +463,33 @@ function generateVisualizations(data, savedState = null) {
 		generatedSvgs["netto-times"] = nettoTimesSvg;
 
 		// Generate histogram visualization
-		const histogramSvg = generateHistogramSvg(filteredData, bucketSize, selectedRunners);
+		const histogramSvg = generateHistogramSvg(
+			filteredData,
+			bucketSize,
+			selectedRunners,
+		);
 		histogramContainer.innerHTML = histogramSvg;
 		generatedSvgs["histogram"] = histogramSvg;
 
 		// Generate start buckets visualization
-		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize, selectedRunners);
+		const startBucketsSvg = generateStartBucketsSvg(
+			filteredData,
+			bucketSize,
+			selectedRunners,
+		);
 		startBucketsContainer.innerHTML = startBucketsSvg;
 		generatedSvgs["start-buckets"] = startBucketsSvg;
 
 		// Generate start vs finish visualization
-		const startVsFinishSvg = generateStartVsFinishSvg(filteredData, selectedRunners);
+		const startVsFinishSvg = generateStartVsFinishSvg(
+			filteredData,
+			selectedRunners,
+		);
 		startVsFinishContainer.innerHTML = startVsFinishSvg;
 		generatedSvgs["start-vs-finish"] = startVsFinishSvg;
 
 		showResults();
-		
+
 		// Save session state after successful visualization
 		saveSessionState();
 	} catch (error) {
@@ -459,8 +508,8 @@ function regenerateVisualizations() {
 	const filteredData = getFilteredData();
 	const bucketSize = Number.parseInt(bucketSizeSelect.value, 10);
 	const selectedRunners = getSelectedRunners()
-		.map(indexStr => Number.parseInt(indexStr, 10))
-		.map(index => fullDataset[index])
+		.map((indexStr) => Number.parseInt(indexStr, 10))
+		.map((index) => fullDataset[index])
 		.filter(Boolean);
 	updateDistanceInfo(filteredData);
 
@@ -470,18 +519,29 @@ function regenerateVisualizations() {
 		nettoTimesContainer.innerHTML = nettoTimesSvg;
 		generatedSvgs["netto-times"] = nettoTimesSvg;
 
-		const histogramSvg = generateHistogramSvg(filteredData, bucketSize, selectedRunners);
+		const histogramSvg = generateHistogramSvg(
+			filteredData,
+			bucketSize,
+			selectedRunners,
+		);
 		histogramContainer.innerHTML = histogramSvg;
 		generatedSvgs["histogram"] = histogramSvg;
 
-		const startBucketsSvg = generateStartBucketsSvg(filteredData, bucketSize, selectedRunners);
+		const startBucketsSvg = generateStartBucketsSvg(
+			filteredData,
+			bucketSize,
+			selectedRunners,
+		);
 		startBucketsContainer.innerHTML = startBucketsSvg;
 		generatedSvgs["start-buckets"] = startBucketsSvg;
 
-		const startVsFinishSvg = generateStartVsFinishSvg(filteredData, selectedRunners);
+		const startVsFinishSvg = generateStartVsFinishSvg(
+			filteredData,
+			selectedRunners,
+		);
 		startVsFinishContainer.innerHTML = startVsFinishSvg;
 		generatedSvgs["start-vs-finish"] = startVsFinishSvg;
-		
+
 		// Save session state after regenerating
 		saveSessionState();
 	} catch (error) {
@@ -508,6 +568,212 @@ function downloadSvg(svgContent, filename) {
 }
 
 /**
+ * Convert SVG to PNG blob
+ * @param {string} svgString - SVG markup
+ * @param {number} width - Desired width
+ * @param {number} height - Desired height
+ * @returns {Promise<Blob>} PNG blob
+ */
+async function svgToPng(svgString, width, height) {
+	return new Promise((resolve, reject) => {
+		const canvas = document.createElement('canvas');
+		canvas.width = width * 2; // 2x for better quality
+		canvas.height = height * 2;
+		const ctx = canvas.getContext('2d');
+		
+		const img = new Image();
+		const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+		const url = URL.createObjectURL(blob);
+		
+		img.onload = () => {
+			ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+			URL.revokeObjectURL(url);
+			
+			canvas.toBlob((pngBlob) => {
+				if (pngBlob) {
+					resolve(pngBlob);
+				} else {
+					reject(new Error('Failed to convert to PNG'));
+				}
+			}, 'image/png');
+		};
+		
+		img.onerror = () => {
+			URL.revokeObjectURL(url);
+			reject(new Error('Failed to load SVG'));
+		};
+		
+		img.src = url;
+	});
+}
+
+/**
+ * Handle sharing a visualization
+ * @param {string} vizType - Type of visualization (key for generatedSvgs)
+ * @param {string} svgContent - SVG content
+ */
+function handleShareVisualization(vizType, svgContent) {
+	try {
+		const raceName = filtersHeaderText.textContent || "Race Results";
+		
+		// Visualization name mapping
+		const vizNames = {
+			'netto-times': 'Net Finish Times',
+			'histogram': 'Finish Times Histogram',
+			'start-buckets': 'Start Time Buckets Histogram',
+			'start-vs-finish': 'Start vs Finish Time Analysis'
+		};
+		
+		const vizName = vizNames[vizType] || vizType;
+		showShareModal(svgContent, vizName, raceName, vizType);
+		trackEvent('visualization-share-clicked', { visualization: vizType });
+	} catch (error) {
+		console.error("Failed to share visualization:", error);
+		showError(`Failed to share visualization: ${error.message}`);
+	}
+}
+
+/**
+ * Show share modal with options
+ * @param {string} svgContent - Generated SVG content
+ * @param {string} vizName - Visualization name
+ * @param {string} raceName - Race name
+ * @param {string} vizType - Visualization type key
+ */
+function showShareModal(svgContent, vizName, raceName, vizType) {
+	// Create modal overlay
+	const modal = document.createElement("div");
+	modal.className = "share-modal-overlay";
+	modal.innerHTML = `
+		<div class="share-modal">
+			<div class="share-modal-header">
+				<h3>Share ${vizName}</h3>
+				<button class="share-modal-close" title="Close">&times;</button>
+			</div>
+			<div class="share-modal-content">
+				<div class="share-preview">
+					${svgContent}
+				</div>
+				<div class="share-actions">
+					<button class="share-action-btn native-share-btn" data-action="native-share">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+							<circle cx="18" cy="5" r="3"></circle>
+							<circle cx="6" cy="12" r="3"></circle>
+							<circle cx="18" cy="19" r="3"></circle>
+							<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+							<line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+						</svg>
+						Share via...
+					</button>
+					<button class="share-action-btn twitter-btn" data-action="twitter">
+						<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+							<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+						</svg>
+						Share on X
+					</button>
+					<button class="share-action-btn facebook-btn" data-action="facebook">
+						<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+							<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+						</svg>
+						Share on Facebook
+					</button>
+				</div>
+				<div class="share-info">
+					<p><strong>Tip:</strong> Use "Share via..." to post directly to social media apps (mobile), or share to X/Facebook (all devices).</p>
+				</div>
+			</div>
+		</div>
+	`;
+
+	document.body.appendChild(modal);
+	
+	// Generate share text
+	const appUrl = "https://bukowskiadam.github.io/datasport-results-analyzer/";
+	const shareText = `Check out this ${vizName} from ${raceName}! Analyzed with datasport-results-analyzer`;
+	
+	// Add event listeners
+	const closeBtn = modal.querySelector(".share-modal-close");
+	closeBtn.addEventListener("click", () => {
+		document.body.removeChild(modal);
+	});
+
+	// Close on overlay click
+	modal.addEventListener("click", (e) => {
+		if (e.target === modal) {
+			document.body.removeChild(modal);
+		}
+	});
+
+	// Action buttons
+	const nativeShareBtn = modal.querySelector('[data-action="native-share"]');
+	nativeShareBtn.addEventListener("click", async () => {
+		try {
+			const filename = `${raceName.replace(/\s+/g, "-")}-${vizType}.png`;
+			const pngBlob = await svgToPng(svgContent, 1200, 600);
+			
+			// Check if Web Share API is available
+			if (navigator.share && navigator.canShare) {
+				const file = new File([pngBlob], filename, { type: 'image/png' });
+				const shareData = {
+					files: [file],
+					title: vizName,
+					text: shareText
+				};
+				
+				if (navigator.canShare(shareData)) {
+					await navigator.share(shareData);
+					trackEvent('visualization-shared-native', { visualization: vizType });
+				} else {
+					// Fallback: download the image
+					const url = URL.createObjectURL(pngBlob);
+					const link = document.createElement('a');
+					link.href = url;
+					link.download = filename;
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link);
+					URL.revokeObjectURL(url);
+					showError('Native sharing not available. Image downloaded instead.');
+				}
+			} else {
+				// Fallback: download the image
+				const url = URL.createObjectURL(pngBlob);
+				const link = document.createElement('a');
+				link.href = url;
+				link.download = filename;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
+				showError('Native sharing not supported on this browser. Image downloaded instead.');
+			}
+		} catch (error) {
+			if (error.name === 'AbortError') {
+				// User cancelled the share
+				console.log('Share cancelled by user');
+			} else {
+				console.error('Failed to share:', error);
+				showError('Failed to share. Please try downloading PNG instead.');
+			}
+		}
+	});
+
+	const twitterBtn = modal.querySelector('[data-action="twitter"]');
+	twitterBtn.addEventListener("click", () => {
+		const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(appUrl)}`;
+		window.open(twitterUrl, "_blank", "width=550,height=420");
+		trackEvent("visualization-shared-twitter", { visualization: vizType });
+	});
+
+	const facebookBtn = modal.querySelector('[data-action="facebook"]');
+	facebookBtn.addEventListener("click", () => {
+		const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(appUrl)}&quote=${encodeURIComponent(shareText)}`;
+		window.open(facebookUrl, "_blank", "width=550,height=420");
+		trackEvent("visualization-shared-facebook", { visualization: vizType });
+	});
+}
+
+/**
  * Handle prepare download button click
  */
 function handlePrepareDownload() {
@@ -527,7 +793,7 @@ function handlePrepareDownload() {
 		// Track URL preparation event
 		const resultsId = extractResultsId(url);
 		if (resultsId) {
-			trackEvent('url-prepared', { event: resultsId });
+			trackEvent("url-prepared", { event: resultsId });
 		}
 
 		manualDownloadSection.style.display = "block";
@@ -572,7 +838,7 @@ async function handleFileUpload(file) {
 		const dnfCount = data.length - finishers.length;
 
 		// Track file upload event
-		trackEvent('data-loaded-upload');
+		trackEvent("data-loaded-upload");
 
 		// Show success message in distance filter section
 		const dataInfo = document.getElementById("data-info");
@@ -707,7 +973,7 @@ async function handleStoredResultClick(id, savedState = null) {
 		if (!result || !result.data) {
 			throw new Error("Result not found");
 		}
-		
+
 		// Update current result ID
 		currentResultId = id;
 
@@ -717,12 +983,12 @@ async function handleStoredResultClick(id, savedState = null) {
 
 		// Prioritize result's saved filter state, then savedState parameter (from page refresh)
 		const stateToRestore = result.filterState || savedState;
-		
+
 		// Generate visualizations with saved state if available
 		generateVisualizations(finishers, stateToRestore);
 
 		// Track stored result loading event
-		trackEvent('data-loaded-storage');
+		trackEvent("data-loaded-storage");
 
 		// Show success message in distance filter section
 		const dataInfo = document.getElementById("data-info");
@@ -754,13 +1020,13 @@ async function handleDeleteResult(id) {
 
 	try {
 		await deleteResult(id);
-		
+
 		// Clear session state if we deleted the current result
 		if (currentResultId === id) {
 			currentResultId = null;
 			clearSessionState();
 		}
-		
+
 		await loadStoredResults();
 		console.log(`Deleted result ID: ${id}`);
 	} catch (error) {
@@ -834,11 +1100,11 @@ async function handleClearAll() {
 
 	try {
 		await clearAllResults();
-		
+
 		// Clear session state since all results are gone
 		currentResultId = null;
 		clearSessionState();
-		
+
 		await loadStoredResults();
 		fileInfo.style.display = "none";
 		console.log("Cleared all stored results");
@@ -869,6 +1135,44 @@ async function init() {
 			const svgContent = generatedSvgs[vizType];
 			if (svgContent) {
 				downloadSvg(svgContent, `${vizType}.svg`);
+			}
+		});
+	});
+
+	// Download PNG button handlers
+	document.querySelectorAll(".download-png-btn").forEach((btn) => {
+		btn.addEventListener("click", async (e) => {
+			const vizType = e.target.dataset.viz;
+			const svgContent = generatedSvgs[vizType];
+			if (svgContent) {
+				try {
+					const raceName = filtersHeaderText.textContent || "race-results";
+					const filename = `${raceName.replace(/\s+/g, "-")}-${vizType}.png`;
+					const pngBlob = await svgToPng(svgContent, 1200, 600);
+					const url = URL.createObjectURL(pngBlob);
+					const link = document.createElement('a');
+					link.href = url;
+					link.download = filename;
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link);
+					URL.revokeObjectURL(url);
+					trackEvent('visualization-downloaded-png', { visualization: vizType });
+				} catch (error) {
+					console.error('Failed to download PNG:', error);
+					showError('Failed to download PNG. Please try downloading SVG instead.');
+				}
+			}
+		});
+	});
+
+	// Share button handlers
+	document.querySelectorAll(".share-btn").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			const vizType = e.target.dataset.viz;
+			const svgContent = generatedSvgs[vizType];
+			if (svgContent) {
+				handleShareVisualization(vizType, svgContent);
 			}
 		});
 	});
@@ -923,8 +1227,8 @@ async function init() {
 	// Distance filter change
 	distanceSelect.addEventListener("change", () => {
 		const selectedDistance = distanceSelect.value;
-		trackEvent('filter-distance-changed', {
-			distance: selectedDistance === '' ? 'all' : selectedDistance
+		trackEvent("filter-distance-changed", {
+			distance: selectedDistance === "" ? "all" : selectedDistance,
 		});
 		regenerateVisualizations();
 	});
@@ -932,15 +1236,15 @@ async function init() {
 	// Bucket size filter change
 	bucketSizeSelect.addEventListener("change", () => {
 		const bucketSize = bucketSizeSelect.value;
-		trackEvent('filter-bucket-size-changed', {
-			value: bucketSize
+		trackEvent("filter-bucket-size-changed", {
+			value: bucketSize,
 		});
 		regenerateVisualizations();
 	});
 
 	// Add runner button click
 	addRunnerBtn.addEventListener("click", () => {
-		trackEvent('filter-runner-input-added');
+		trackEvent("filter-runner-input-added");
 		runnerSelectorsContainer.appendChild(createRunnerSelector());
 		updateAddButtonVisibility();
 	});
@@ -1003,15 +1307,15 @@ async function init() {
 	try {
 		await initStorage();
 		await loadStoredResults();
-		
+
 		// Try to restore last session
 		const savedState = loadSessionState();
 		if (savedState?.resultId) {
-			console.log('Restoring last session:', savedState);
+			console.log("Restoring last session:", savedState);
 			try {
 				await handleStoredResultClick(savedState.resultId, savedState);
 			} catch (error) {
-				console.error('Failed to restore last session:', error);
+				console.error("Failed to restore last session:", error);
 				// Clear invalid session state
 				clearSessionState();
 			}
