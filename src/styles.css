@@ -211,6 +211,10 @@ footer {
   font-size: 0.9rem;
 }
 
+footer p {
+  margin: 8px 0;
+}
+
 footer a {
   color: var(--primary-color);
   text-decoration: none;
@@ -218,6 +222,15 @@ footer a {
 
 footer a:hover {
   text-decoration: underline;
+}
+
+.support-link {
+  color: #ff6b6b;
+  font-weight: 500;
+}
+
+.support-link:hover {
+  color: #ee5a52;
 }
 
 .cors-settings {
@@ -1111,6 +1124,31 @@ footer a:hover {
 }
 
 .share-info a:hover {
+  text-decoration: underline;
+}
+
+.share-support {
+  padding: 16px;
+  background: #fff3e0;
+  border-left: 4px solid #ff6b6b;
+  border-radius: 4px;
+  margin-top: 12px;
+}
+
+.share-support p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.share-support a {
+  color: #ff6b6b;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.share-support a:hover {
+  color: #ee5a52;
   text-decoration: underline;
 }
 

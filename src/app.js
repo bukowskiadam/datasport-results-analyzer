@@ -797,6 +797,9 @@ function showShareModal(svgContent, vizName, raceName, vizType) {
 				<div class="share-info">
 					<p><strong>Tip:</strong> Use "Share via..." to post directly to social media apps (mobile), or share to X/Facebook (all devices).</p>
 				</div>
+				<div class="share-support">
+					<p>☕ Enjoying this tool? <a href="https://tipped.pl/bukowski" target="_blank" rel="noopener">Buy me a coffee</a> to support development!</p>
+				</div>
 			</div>
 		</div>
 	`;
